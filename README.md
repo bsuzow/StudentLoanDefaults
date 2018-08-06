@@ -8,6 +8,6 @@ Seeking the data related this concern, I found datasets that the U.S. Department
 
 Using one of the datasets, known as [Report 300](https://www2.ed.gov/offices/OSFAP/defaultmanagement/peps300.xlsx), I plan on answering the following questions:
 
-- Is the default trend upward, download or steady?
+- Is the default trend upward, download or held steady?
 - Any strong predictors of higher default rates?
 - What are default rate distributions by various categorical variables (program length, school type, or region/state)
