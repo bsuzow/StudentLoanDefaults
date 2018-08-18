@@ -2,9 +2,10 @@
 title: "Student Loan Defaults"
 author: "Bo Suzow"
 date: "July 30, 2018"
-output: html_document
+output: 
+  html_document:
+    keep_md: TRUE
 ---
-
 
 # Introduction
 
@@ -22,16 +23,58 @@ library(readxl)
 
 # Data Load
 
-The dataset is publicly available [here](https://www2.ed.gov/offices/OSFAP/defaultmanagement/peps300.xlsx).  The details on the data dictionary (explanation of each column/field) is found [here](https://www2.ed.gov/offices/OSFAP/defaultmanagement/instructions.html).  While USDOE released 5 Default Reports, this analysis focuses on Report 300 which reports "FY 2014, FY 2013, and FY 2012 official cohort default rates published for schools participating in the Title IV student financial assistance programs."
+## Student Loan Defaults (SLD)
+
+The data set is publicly available [here](https://www2.ed.gov/offices/OSFAP/defaultmanagement/peps300.xlsx).  The details on the data dictionary (explanation of each column/field) is found [here](https://www2.ed.gov/offices/OSFAP/defaultmanagement/instructions.html).  While USDOE released 5 Default Reports, this analysis *focuses on the 2014 cohort* of Report 300 which reports "FY 2014, FY 2013, and FY 2012 official cohort default rates published for schools participating in the Title IV student financial assistance programs."
+
+## College Scorecard (CS)
+
+<<<<<<<<< To be revised with the ref of 10-14 data >>>>>>>>>>>>>>>>>
+
+This data set is a part of a [data bundle](https://ed-public-download.app.cloud.gov/downloads/CollegeScorecard_Raw_Data.zip) published by the US Department of Education.  This analysis utilizes the data pertinent to the 2014-15 academic year cohort (`MERGED2014_15_PP.csv`). The full data documentation is found [here](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf).
 
 
 ```{r data_load}
 
-defaults=read_excel("peps300.xlsx")
-defaults = tbl_df(defaults)
-#defaults
+# Load the student loan default data set.
+
+defaults <- read_excel("peps300.xlsx")
+defaults <- tbl_df(defaults)
+
+# Load the college scorecard data set for academic year 14-15
+
+scorecard14-15<- read.csv("MERGED2014_15_PP.csv")
+scorecard14-15 <- tbl_df(scorecard14-15)
+
+# Load the college scorecard data set for academic year 10-11
+
+scorecard10-11<- read.csv("MERGED2010_11_PP.csv")
+scorecard10-11 <- tbl_df(scorecard10-11)
+
 
 ```
+
+***
+# Data Wrangling
+
+The default data set (`defaults`) and the college scorecard data set (`scorecard`) will be joined on OPEID. This study will be conducted on the institutions represented in `defaults`.
+
+## Strategy
+
+- Clean up Student Loan Default (SLD) data set (`defaults`).
+    - Standardize column names.
+    - Inspect presence of missing value.
+    - Determin missing value treatment strategy if applicable.
+    - Select variables relevant to this study.
+    
+- Join SLD and the College Scorecard (CS) data set (`scorecard`). 
+    - Review the colleges presented in multiple rows (example: OPEID 23328) and roll them up, maintaining contextual meanings data provides.
+    
+- Clean up `scorecard`.
+    - Repeat the same steps applied to SLD.
+       - The string `NULL` is used for missing value.  
+
+### Student Loan Default Data Set - `defaults`
 
 The dataset features 4712 schools participating in the Title IV programs. 29 variables/columns are provided in the dataset.  Let's rename them for easiness of the processing ensued.  
 
@@ -56,8 +99,6 @@ names(defaults)[colSums(is.na(defaults))>0]
 No missing value strategy is needed as these columns will not be used in the analysis. 
 
 ***
-
-# School Counts by Categorical Variables/Columns
 
 There are a few categorical (aka factor) variables in the dataset -- State (state), Program Length (prog_len), School Type (school_type), Program, Ethnic Code (eth_code).
 Let's convert them to factor variables (categorical variables are called factor variables in R) with proper labels (descriptions of the codes).
@@ -115,6 +156,49 @@ defaults <- defaults %>% mutate(region = factor(region,levels=region_list,
 ```
 
 
+### Colleague Scorecard Data Set - `scorecard`
+
+As there are a large number (1700+) of variables in `scorecard` data set, the [data element list](https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx) has been reviewed. Using the [data documentation](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf) as guidelines, the variables are selected in the following code block:
+
+```{r}
+
+sc.net <- scorecard %>% select(OPEID6,INSTNM,STABBR,NUMBRANCH,CONTROL,PREDDEG,
+                               REGION,LOCALE,LATITUDE,LONGITUDE,CCBASIC,
+                               CCUGPROF,CCSIZSET,RELAFFIL,ADM_RATE_ALL,
+                               DISTANCEONLY,UGDS,UG,
+                               UGDS_WHITE,UGDS_BLACK,UGDS_HISP,UGDS_ASIAN,
+                               CURROPER,
+                               NPT4_PUB,NPT4_PRIV,
+                               NUM4_PUB,NUM4_PRIV,
+                               TUITFTE,INEXPFTE,AVGFACSAL,
+                               PFTFAC,
+                               PCTPELL,
+                               C150_4,
+                               RET_FT4,
+                               PCTFLOAN,
+                               UG25ABV,
+                               CDR3,
+                               PAR_ED_PCT_1STGEN,
+                               DEP_INC_AVG,
+                               IND_INC_AVG,
+                               DEBT_MDN,
+                               GRAD_DEBT_MDN,
+                               WDRAW_DEBT_MDN,
+                               FAMINC,
+                               MD_FAMINC,
+                               POVERTY_RATE,
+                               MN_EARN_WNE_P10,
+                               MD_EARN_WNE_P10,
+                               CDR3_DENOM,
+                               T4APPROVALDATE)
+
+```
+
+
+
+***
+# Quick counts and plots
+## School Counts by Categorical Variables/Columns
 
 ```{r}
 
@@ -127,8 +211,6 @@ sum_eth_code <- defaults %>% group_by(eth_code) %>% summarize(n())
 ```
 
 ***
-
-# Data Wrangling
 
 
 ```{r}
