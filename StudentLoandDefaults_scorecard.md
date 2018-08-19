@@ -312,7 +312,7 @@ sc1415.net <- sc1415.net %>% mutate(REGION = factor(REGION,levels=region_list,
 
 ## Quick Descriptive Statistics
 
-The total number of students who entered repayment between October 2013 and September 2014 is 34.6 million. Of these, 3.1024919\times 10^{7}M are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1290004 with the standard deviation of 0.0748101.
+The total number of students who are in repayment as of FYR 2014-15 is 34.6 million. Of these, 31 million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1290004 with the standard deviation of 0.0748101.
 
 Total count, mean and standard deviation of default rates (`CDR3`) by `CONTROL` - ownership type.
 
