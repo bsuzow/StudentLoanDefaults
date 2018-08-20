@@ -11,6 +11,10 @@ output:
 
 Student loan debt (SLD) total in the US reached a staggering number in 1.5 trillion dollars, borrowed by 44 million people. It is `r round(1480/620,1)` times larger than the total of credit card debt.  The SLD total in 2008 was 640 billion dollars [which ballooned to 1.2 trillion by 2015](https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/).  
 
+While [the return on investment of higher education (HED) is well known and documented] (https://college-education.procon.org/), student loans accumulated for financing higher education are reported as societal issues such as [reasons for divorce](https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html), financial dependence on parents, and lack of home ownership observed in Gen-Y.  
+
+In order for an student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
+
 The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics including default rates and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data.  The goals of this report are:
 
 - Explore the data to ascertain some trends the data is telling us.
@@ -44,7 +48,7 @@ scorecard1415 <- tbl_df(scorecard1415)
 ***
 # Data Wrangling
 
-## Strategy
+## Strategy 1
 
 - Clean up the data set.
     - Select variables relevant to this study.
@@ -56,7 +60,12 @@ scorecard1415 <- tbl_df(scorecard1415)
 
 ## Select relevant variables 
 
-As there are a large number (1700+) of variables in `scorecard` data set, the [data element list](https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx) has been reviewed. Using the [data documentation](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf) as guidelines, the variables are selected in the following code block:
+Two issues with the data set are noticed immediately. 
+
+- First, the number of variables/features is overwhelmingly large at 1700+.
+- Secondly, many rows have missing values. 
+
+To address the first issue, the [data element list](https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx) has been reviewed. Using the [data documentation](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf) as guidelines, the variables are selected in the following code block:
 
 
 ```{r selectVar1}
@@ -106,12 +115,11 @@ sc1415 <- sc1415.all %>% filter(!is.na(CDR3))
 
 ```
 
-It's observed that missing values are rather concentrated on the schools classified as stand alone graduate institutions. Let's remove them from the analysis.
+As for missing values, tt's observed that they are rather concentrated on the schools classified as stand alone graduate institutions. Let's remove them from the analysis.
 
 ```{r removeGradInst}
 sc1415 <- sc1415 %>% filter(PREDDEG!=4)
 ```
-
 
 ## Missing Values
 
@@ -133,13 +141,12 @@ naProportion[naProportion<.1]
 
 ```
 
-
 Let's confirm that all `CDR3` and `CDR3_DENOM` values are numeric.
 
 ```{r checkCDR3}
 
-sum(!is.numeric(sc1415$CDR3))
-sum(!is.numeric(sc1415$CDR3_DENOM))
+!is.numeric(sc1415$CDR3)
+!is.numeric(sc1415$CDR3_DENOM)
 
 ```
 
@@ -179,6 +186,26 @@ summary(sc1415.net$CDR3)
 
 ```
 
+## Strategy 2
+
+Stragegy 1 left us with a few number of numeric variables. A quick exploratory plots show no so strong associations between them and default rates.
+
+Armed with some knowledge Stragety 1 revealed, let's take a different approach:
+
+- Remove all rows with missing `CDR3` values.  It reduces the # of variables from 7100+ to 1700+.
+- Remove stand-alone gradudate institutions and those unclassified (`PREDDEG == 0 or 4`).
+_ Remove all columns with missing values. 
+
+```{r}
+sc1415.cdr3 = scorecard1415 %>% filter(!is.na(CDR3))
+sc1415.cdr3 = sc1415.cdr3 %>% filter(!(PREDDEG == 0 | PREDDEG == 4))
+sc1415.cdr3 <- sc1415.cdr3[,colSums(is.na(sc1415.cdr3))==0]
+
+```
+
+This results in `r nrow(sc1415.cdr3)` rows and `r ncol(sc1415.cdr3)` columns. This data frame is bigger than one resulted from Strategy 1, its features are mostly reporting fields of study (Classification of Instructional Programs). We will move ahead with the Strategy 1's data frame `sc1415.net`, but keep `sc1415.cdr3` for complimentary data if needed.
+
+***
 
 ## Converting to factor variables
 
@@ -300,7 +327,7 @@ sc1415.net %>% group_by(CONTROL) %>% summarize(mean(CDR3),sd(CDR3))
 
 ```
 
-
+## Plotting
 
 Let's draw some histograms.
 
@@ -308,26 +335,26 @@ Let's draw some histograms.
 ```{r descStatPlots}
 
 ggplot(sc1415.net,aes(x=CDR3)) + 
-   geom_histogram(binwidth=.05,alpha=.5) +
+   geom_histogram(binwidth=.03,alpha=.5) +
    xlab("Default Rate")
 
 ggplot(sc1415.net,aes(x=CDR3, fill=CONTROL)) + 
-   geom_histogram(binwidth=.05) +
+   geom_histogram(binwidth=.03) +
    facet_grid(CONTROL~.) +
    xlab("Default Rate")
 
 ggplot(sc1415.net,aes(x=CDR3, fill=PREDDEG)) + 
-   geom_histogram(binwidth=.05) +
+   geom_histogram(binwidth=.03) +
    facet_grid(PREDDEG~.) +
    xlab("Default Rate")
 
 ggplot(sc1415.net,aes(x=CDR3, fill=DISTANCEONLY)) + 
-   geom_histogram(binwidth=.05) +
+   geom_histogram(binwidth=.03) +
    facet_grid(DISTANCEONLY~.) +
    xlab("Default Rate")
 
 ggplot(sc1415.net,aes(x=CDR3, fill=REGION)) + 
-   geom_histogram(binwidth=.05) +
+   geom_histogram(binwidth=.03) +
    facet_grid(REGION~.) +
    xlab("Default Rate")
 
@@ -338,7 +365,7 @@ ggplot(sc1415.net,aes(x=CDR3, fill=REGION)) +
 
 ## Scatter Plots
 
-Numeric variables vs default rate by school ownership type
+#### Median debt vs default rate for students who completed by school ownership type
 
 ```{r}
 
@@ -347,35 +374,70 @@ Numeric variables vs default rate by school ownership type
 ggplot(sc1415.net,aes(x=GRAD_DEBT_MDN,y=CDR3, col=CONTROL)) +
    geom_point(alpha=.3) +
    facet_grid(CONTROL~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   xlab("The median debt for students who have completed") +
+   ylab("Default Rate") 
+
+```
+
+For public schools, the higher default rates are more concentrated in the lower median debt brackets.  It is interesting to note that median debt has no association with default rate for for-profit private schools.
 
 
+#### Median debt vs default rate for students who did not complete by school ownership type
+
+```{r}
 # The median debt for students who have withdrawn vs default rate by school ownership
 
 ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=CONTROL)) +
    geom_point(alpha=.3) +
    facet_grid(CONTROL~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   xlab("The median debt for students who have not completed") +
+   ylab("Default Rate")
 
+```
+
+The same trends are observed regardless of program completion status.
+
+#### First generation vs default rate by school ownership type
+
+```{r}
 
 # Percentage first-generation students vs default rate by school ownership
 
 ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=CONTROL)) +
    geom_point(alpha=.3) +
    facet_grid(CONTROL~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   xlab("Percentage first-generation students") +
+   ylab("Default Rate")
 
+```
+
+There is a positive correlation between default rate and proportion of students who reported as first generation in getting higher education. For-profit private schools seem to have a higher mean of the proportions. 
+
+
+#### Federal student oan vs default rate by school ownership type
+
+```{r}
 
 # Percent of all undergraduate students receiving a federal student loan
 
 ggplot(sc1415.net,aes(y=CDR3,x=PCTFLOAN, col=CONTROL)) +
    geom_point(alpha=.3) +
    facet_grid(CONTROL~.) + 
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   xlab("Percent of all UG students receiving a federal student loan") +
+   ylab("Default Rate")
 
 ```
 
-A numeric variable XYZ vs default rate by predominant degree type
+For-profit private institutions report higher fed loan participation rates. Yet, their default rates don't have any correlation with the participation rates.  
+
+In the following plots facetting based on degree type or region, the correlation between first generation and default rate repeats. Students who completed bachelor's degree programs contributed to higher default rates when facing higher loan debt (positive correlation).
+
+Across regions, simiar regression lines are drawn.  No regions do better or worse when it comes to default rates.
+
 
 ```{r}
 
@@ -384,7 +446,8 @@ A numeric variable XYZ vs default rate by predominant degree type
 ggplot(sc1415.net,aes(y=CDR3,x=GRAD_DEBT_MDN, col=PREDDEG)) +
    geom_point(alpha=.3) +
    facet_grid(PREDDEG~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   ylab("Default Rate")
 
 
 # The median debt for students who have withdrawn vs default rate by degree type
@@ -392,7 +455,8 @@ ggplot(sc1415.net,aes(y=CDR3,x=GRAD_DEBT_MDN, col=PREDDEG)) +
 ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=PREDDEG)) +
    geom_point(alpha=.3) +
    facet_grid(PREDDEG~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") +
+   ylab("Default Rate")
 
 
 # Percentage first-generation students vs default rate by degree type
@@ -403,14 +467,15 @@ ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=PREDDEG)) +
 ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=PREDDEG)) +
    geom_point(alpha=.3) +
    facet_grid(PREDDEG~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm") + 
+   ylab("Default Rate")
 
 
 
 ```
 
 
-A numeric variable XYZ vs default rate by region
+Numeric variables vs default rate by region.  
 
 ```{r}
 
@@ -419,14 +484,14 @@ A numeric variable XYZ vs default rate by region
 ggplot(sc1415.net,aes(y=CDR3,x=GRAD_DEBT_MDN, col=REGION)) +
    geom_point(alpha=.3) +
    facet_grid(REGION~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm")
 
 # The median debt for students who have withdrawn vs default rate by region
 
 ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=REGION)) +
    geom_point(alpha=.3) +
    facet_grid(REGION~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm")
 
 # Percentage first-generation students vs default rate by region
 
@@ -436,7 +501,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=REGION)) +
 ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=REGION)) +
    geom_point(alpha=.3) +
    facet_grid(REGION~.) +
-   geom_smooth(col="black")
+   geom_smooth(col="black", method="lm")
 
 
 ```
