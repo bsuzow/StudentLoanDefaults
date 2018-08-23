@@ -13,13 +13,13 @@ Student loan debt (SLD) total in the US reached a staggering number in 1.5 trill
 
 While [the return on investment of higher education (HED) is well known and documented] (https://college-education.procon.org/), student loans accumulated for financing higher education are reported as societal issues such as [reasons for divorce](https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html), financial dependence on parents, and lack of home ownership observed in Gen-Y.  
 
-In order for an student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
+In order for a student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
 
 The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics including default rates and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data.  The goals of this report are:
 
 - Explore the data to ascertain some trends the data is telling us.
 - Find out strong predictors affecting default rates.
-- Build a prediction model for default rates.
+- Build a predictive model for default rates.
 
 
 
@@ -256,7 +256,7 @@ sc1415.cdr3 = sc1415.cdr3 %>% filter(!(PREDDEG == 0 | PREDDEG == 4))
 sc1415.cdr3 <- sc1415.cdr3[,colSums(is.na(sc1415.cdr3))==0]
 ```
 
-This results in 6018 rows and 247 columns. This data frame is bigger than one resulted from Strategy 1, its features are mostly reporting fields of study (Classification of Instructional Programs). We will move ahead with the Strategy 1' data frame `sc1415.net`, but keep `sc1415.cdr3` for complimentary data if needed.
+This results in 6018 rows and 247 columns. This data frame is bigger than one resulted from Strategy 1, its features are mostly reporting fields of study (Classification of Instructional Programs). We will move ahead with the Strategy 1's data frame `sc1415.net`, but keep `sc1415.cdr3` for complimentary data if needed.
 
 ***
 
@@ -525,6 +525,100 @@ ggplot(sc1415.net,aes(x=CDR3, fill=REGION)) +
 
 ## Scatter Plots
 
+
+#### Percent of Pell Grant vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=PCTPELL,y=CDR3)) +
+   geom_point(alpha=.3, col='Blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+
+#### Percent of Federal loan vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=PCTFLOAN,y=CDR3)) +
+   geom_point(alpha=.3, col='green') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+#### Average family income of dependent students vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=DEP_INC_AVG,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+#### Average family income of independent students vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=IND_INC_AVG,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+#### Median loan amount vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=DEBT_MDN,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+#### Median family income vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=MD_FAMINC,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+
+
+#### Number of students in cohort vs default rate
+
+
+```r
+ggplot(sc1415.net,aes(x=CDR3_DENOM,y=CDR3)) +
+   geom_point(alpha=.05, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+#### Number of students in cohort vs default rate - without outliers
+
+
+```r
+ggplot(sc1415.net[sc1415.net$CDR3_DENOM<100000,],aes(x=CDR3_DENOM,y=CDR3)) +
+   geom_point(alpha=.05, col='blue') +
+   geom_smooth(method="lm", col="black")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+
 #### Median debt vs default rate for students who completed by school ownership type
 
 
@@ -539,7 +633,7 @@ ggplot(sc1415.net,aes(x=GRAD_DEBT_MDN,y=CDR3, col=CONTROL)) +
    ylab("Default Rate") 
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 For public schools, the higher default rates are more concentrated in the lower median debt brackets.  It is interesting to note that median debt has no association with default rate for for-profit private schools.
 
@@ -558,9 +652,9 @@ ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=CONTROL)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
-The same trends are observed between students who completed programs or not.
+The same trends are observed regardless of program completion status.
 
 #### First generation vs default rate by school ownership type
 
@@ -576,7 +670,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=CONTROL)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 There is a positive correlation between default rate and proportion of students who reported as first generation in getting higher education. For-profit private schools seem to have a higher mean of the proportions. 
 
@@ -595,7 +689,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=PCTFLOAN, col=CONTROL)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 For-profit private institutions report higher fed loan participation rates. Yet, their default rates don't have any correlation with the participation rates.  
 
@@ -615,7 +709,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=GRAD_DEBT_MDN, col=PREDDEG)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ```r
 # The median debt for students who have withdrawn vs default rate by degree type
@@ -627,7 +721,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=PREDDEG)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-19-2.png)<!-- -->
 
 ```r
 # Percentage first-generation students vs default rate by degree type
@@ -642,7 +736,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=PREDDEG)) +
    ylab("Default Rate")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-11-3.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-19-3.png)<!-- -->
 
 
 Numeric variables vs default rate by region.  
@@ -657,7 +751,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=GRAD_DEBT_MDN, col=REGION)) +
    geom_smooth(col="black", method="lm")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ```r
 # The median debt for students who have withdrawn vs default rate by region
@@ -668,7 +762,7 @@ ggplot(sc1415.net,aes(y=CDR3,x=WDRAW_DEBT_MDN, col=REGION)) +
    geom_smooth(col="black", method="lm")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 ```r
 # Percentage first-generation students vs default rate by region
@@ -682,4 +776,4 @@ ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=REGION)) +
    geom_smooth(col="black", method="lm")
 ```
 
-![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-12-3.png)<!-- -->
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-20-3.png)<!-- -->

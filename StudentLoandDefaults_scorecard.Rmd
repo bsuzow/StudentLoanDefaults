@@ -13,13 +13,13 @@ Student loan debt (SLD) total in the US reached a staggering number in 1.5 trill
 
 While [the return on investment of higher education (HED) is well known and documented] (https://college-education.procon.org/), student loans accumulated for financing higher education are reported as societal issues such as [reasons for divorce](https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html), financial dependence on parents, and lack of home ownership observed in Gen-Y.  
 
-In order for an student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
+In order for a student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
 
 The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics including default rates and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data.  The goals of this report are:
 
 - Explore the data to ascertain some trends the data is telling us.
 - Find out strong predictors affecting default rates.
-- Build a prediction model for default rates.
+- Build a predictive model for default rates.
 
 
 ```{r setup, include=FALSE}
@@ -364,6 +364,92 @@ ggplot(sc1415.net,aes(x=CDR3, fill=REGION)) +
 
 
 ## Scatter Plots
+
+
+#### Percent of Pell Grant vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=PCTPELL,y=CDR3)) +
+   geom_point(alpha=.3, col='Blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+
+#### Percent of Federal loan vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=PCTFLOAN,y=CDR3)) +
+   geom_point(alpha=.3, col='green') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+#### Average family income of dependent students vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=DEP_INC_AVG,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+
+#### Average family income of independent students vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=IND_INC_AVG,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+#### Median loan amount vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=DEBT_MDN,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+#### Median family income vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=MD_FAMINC,y=CDR3)) +
+   geom_point(alpha=.3, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+
+
+#### Number of students in cohort vs default rate
+
+```{r}
+
+ggplot(sc1415.net,aes(x=CDR3_DENOM,y=CDR3)) +
+   geom_point(alpha=.05, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
+#### Number of students in cohort vs default rate - without outliers
+
+```{r}
+
+ggplot(sc1415.net[sc1415.net$CDR3_DENOM<100000,],aes(x=CDR3_DENOM,y=CDR3)) +
+   geom_point(alpha=.05, col='blue') +
+   geom_smooth(method="lm", col="black")
+
+```
+
 
 #### Median debt vs default rate for students who completed by school ownership type
 
