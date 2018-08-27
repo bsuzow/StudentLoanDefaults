@@ -33,7 +33,7 @@ This data set is a part of a [data bundle](https://ed-public-download.app.cloud.
 ```r
 # Load the college scorecard data set for academic year 14-15
 
-scorecard1415<- read.csv("MERGED2014_15_PP.csv",na.strings=c("NULL","PrivacySuppressed"))
+scorecard1415 <- read.csv("MERGED2014_15_PP.csv",na.strings=c("NULL","PrivacySuppressed"))
 scorecard1415 <- tbl_df(scorecard1415)
 ```
 
@@ -266,8 +266,8 @@ Convert `CONTROL`, `PREDDEG`, `DISTANCEONLY`, and `REGION` to factor variables.
 
 
 ```r
-control_list = c(1:3)
-control_descs = c("Public",
+control_list <- c(1:3)
+control_descs <- c("Public",
                   "Private nonprofit",
                   "Private for-profit")
 
@@ -278,8 +278,8 @@ sc1415.net <- sc1415.net %>% mutate(CONTROL = factor(CONTROL,levels=control_list
 # 3	Private for-profit
 
 
-preddeg_list = c(1:3)
-preddeg_descs = c(
+preddeg_list <- c(1:3)
+preddeg_descs <- c(
                   "Certificate",
                   "Associate's",
                   "Bachelor's"
@@ -306,8 +306,8 @@ sc1415.net <- sc1415.net %>% mutate(DISTANCEONLY = factor(DISTANCEONLY,levels=di
 #1	Distance-education only
 
 
-region_list = c(0:9)
-region_descs = c("U.S. Service Schools",
+region_list <- c(0:9)
+region_descs <- c("U.S. Service Schools",
                  "New England",
                  "Mid East",
                  "Great Lakes",
@@ -777,3 +777,401 @@ ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=REGION)) +
 ```
 
 ![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-20-3.png)<!-- -->
+
+
+## Categorical Variable Conversion to Dummy Variables
+
+Before building modeling, categorical variables need to be converted to dummy variables. `CONTROL`, `PREDDEG`, and `REGION` will be converted. `DISTANCEONLY` has been dropped as its values are highly skewed. 
+
+
+```r
+library(caret)
+```
+
+```
+## 
+## Attaching package: 'caret'
+```
+
+```
+## The following object is masked from 'package:survival':
+## 
+##     cluster
+```
+
+```r
+dummies <- dummyVars("~ CONTROL + PREDDEG + REGION", data=sc1415.net,fullRank=TRUE)
+dummies <- data.frame(predict(dummies,newdata=sc1415.net))
+sc1415.final <- as.data.frame(cbind(sc1415.net,dummies))
+
+# remove variables unused in modeling building
+
+sc1415.final$OPEID6 <-  NULL
+sc1415.final$STABBR <-  NULL
+sc1415.final$INSTNM <-  NULL
+
+sc1415.final$CONTROL <- NULL
+sc1415.final$REGION  <- NULL
+sc1415.final$PREDDEG <- NULL
+sc1415.final$DISTANCEONLY <- NULL
+```
+
+## Predictive Model Building
+
+Now, the `sc1415.final` data frame is all set for building models.  It consists of 5210 observations and 27 independent variables.  The `CDR3` is the outcome variable.  The goal is to predict student loan default rates.
+
+Let's split the data frame to training and test sets.
+
+
+```r
+library(caTools)
+set.seed(100)
+split_vec <- sample.split(sc1415.final$CDR3,SplitRatio=.75)
+Train <- sc1415.final[split_vec,]
+Test <- sc1415.final[!(split_vec),]
+```
+
+
+### Model 1 - Linear Regression
+
+#### Full MOdel 
+In this modeling, all independent variables are thrown in. Uninfluential variables are eliminated with the `stepAIC()` function from the `MASS` package.  
+
+
+```r
+lm1 <- lm(CDR3~.,data=Train)
+summary(lm1)
+```
+
+```
+## 
+## Call:
+## lm(formula = CDR3 ~ ., data = Train)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.20208 -0.03155 -0.00326  0.02692  0.59081 
+## 
+## Coefficients: (1 not defined because of singularities)
+##                              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 1.535e-01  1.363e-02  11.261  < 2e-16 ***
+## NUMBRANCH                   1.088e-05  4.819e-05   0.226 0.821406    
+## TUITFTE                     1.494e-07  1.973e-07   0.757 0.448988    
+## INEXPFTE                   -8.360e-07  1.795e-07  -4.658 3.29e-06 ***
+## PCTPELL                     2.325e-02  9.625e-03   2.416 0.015732 *  
+## PCTFLOAN                   -7.679e-03  7.737e-03  -0.992 0.321033    
+## PAR_ED_PCT_1STGEN           7.680e-02  1.621e-02   4.738 2.23e-06 ***
+## DEP_INC_AVG                -4.903e-07  1.811e-07  -2.707 0.006822 ** 
+## IND_INC_AVG                -1.792e-06  1.514e-07 -11.842  < 2e-16 ***
+## DEBT_MDN                   -3.027e-06  4.409e-07  -6.866 7.65e-12 ***
+## GRAD_DEBT_MDN               2.241e-06  2.647e-07   8.468  < 2e-16 ***
+## WDRAW_DEBT_MDN              1.518e-06  6.433e-07   2.360 0.018303 *  
+## FAMINC                     -6.297e-07  3.750e-07  -1.679 0.093191 .  
+## MD_FAMINC                   4.389e-07  3.018e-07   1.454 0.145999    
+## CDR3_DENOM                  2.412e-08  5.735e-08   0.421 0.674054    
+## CONTROL.Private.nonprofit  -9.530e-03  3.313e-03  -2.876 0.004045 ** 
+## CONTROL.Private.for.profit -2.765e-02  3.705e-03  -7.462 1.04e-13 ***
+## PREDDEG.Associate.s         2.781e-03  3.070e-03   0.906 0.365057    
+## PREDDEG.Bachelor.s         -4.488e-02  4.481e-03 -10.015  < 2e-16 ***
+## REGION.New.England          2.280e-02  1.088e-02   2.096 0.036133 *  
+## REGION.Mid.East             1.147e-02  1.038e-02   1.105 0.269339    
+## REGION.Great.Lakes          1.904e-02  1.033e-02   1.843 0.065408 .  
+## REGION.Plains               3.162e-02  1.045e-02   3.024 0.002510 ** 
+## REGION.Southeast            3.063e-02  9.950e-03   3.079 0.002094 ** 
+## REGION.Southwest            3.921e-02  1.027e-02   3.817 0.000137 ***
+## REGION.Rocky.Mtn            3.820e-02  1.101e-02   3.469 0.000527 ***
+## REGION.Far.West             1.884e-02  1.022e-02   1.843 0.065389 .  
+## REGION.Outlying.Areas              NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.05592 on 3897 degrees of freedom
+## Multiple R-squared:  0.4677,	Adjusted R-squared:  0.4642 
+## F-statistic: 131.7 on 26 and 3897 DF,  p-value: < 2.2e-16
+```
+
+```r
+library(MASS)
+```
+
+```
+## 
+## Attaching package: 'MASS'
+```
+
+```
+## The following object is masked from 'package:plotly':
+## 
+##     select
+```
+
+```
+## The following object is masked from 'package:dplyr':
+## 
+##     select
+```
+
+```r
+step.model1 <- stepAIC(lm1, direction = "both", 
+                      trace = FALSE)
+summary(step.model1)
+```
+
+```
+## 
+## Call:
+## lm(formula = CDR3 ~ INEXPFTE + PCTPELL + PAR_ED_PCT_1STGEN + 
+##     DEP_INC_AVG + IND_INC_AVG + DEBT_MDN + GRAD_DEBT_MDN + WDRAW_DEBT_MDN + 
+##     CONTROL.Private.nonprofit + CONTROL.Private.for.profit + 
+##     PREDDEG.Bachelor.s + REGION.New.England + REGION.Great.Lakes + 
+##     REGION.Plains + REGION.Southeast + REGION.Southwest + REGION.Rocky.Mtn + 
+##     REGION.Far.West, data = Train)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.20264 -0.03203 -0.00332  0.02691  0.59507 
+## 
+## Coefficients:
+##                              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 1.616e-01  1.068e-02  15.138  < 2e-16 ***
+## INEXPFTE                   -7.903e-07  1.605e-07  -4.923 8.89e-07 ***
+## PCTPELL                     1.640e-02  6.635e-03   2.472 0.013477 *  
+## PAR_ED_PCT_1STGEN           8.273e-02  1.483e-02   5.580 2.57e-08 ***
+## DEP_INC_AVG                -7.232e-07  9.468e-08  -7.639 2.74e-14 ***
+## IND_INC_AVG                -1.745e-06  1.450e-07 -12.039  < 2e-16 ***
+## DEBT_MDN                   -3.169e-06  4.046e-07  -7.833 6.11e-15 ***
+## GRAD_DEBT_MDN               2.461e-06  2.062e-07  11.937  < 2e-16 ***
+## WDRAW_DEBT_MDN              1.495e-06  6.213e-07   2.405 0.016200 *  
+## CONTROL.Private.nonprofit  -1.007e-02  2.960e-03  -3.403 0.000674 ***
+## CONTROL.Private.for.profit -2.824e-02  2.771e-03 -10.192  < 2e-16 ***
+## PREDDEG.Bachelor.s         -4.939e-02  3.214e-03 -15.367  < 2e-16 ***
+## REGION.New.England          1.181e-02  4.380e-03   2.697 0.007025 ** 
+## REGION.Great.Lakes          8.262e-03  3.165e-03   2.611 0.009064 ** 
+## REGION.Plains               2.121e-02  3.777e-03   5.615 2.10e-08 ***
+## REGION.Southeast            1.976e-02  2.906e-03   6.801 1.19e-11 ***
+## REGION.Southwest            2.831e-02  3.586e-03   7.895 3.74e-15 ***
+## REGION.Rocky.Mtn            2.797e-02  5.169e-03   5.411 6.65e-08 ***
+## REGION.Far.West             8.469e-03  3.347e-03   2.530 0.011444 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.05591 on 3905 degrees of freedom
+## Multiple R-squared:  0.4668,	Adjusted R-squared:  0.4644 
+## F-statistic: 189.9 on 18 and 3905 DF,  p-value: < 2.2e-16
+```
+It reduces the number of predictors to 19 from 28.
+
+Alternatively, let's try the `regsubsets()` that provides the tuning parameter `nvmax` for the number of predictors. In order to optimize `nvmax`, we can use k-fold cross-validation. Click [here](http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/) for details and an example.
+
+
+```r
+set.seed(100)
+
+k = 10
+train.control <- trainControl(method = "cv", number = k)
+
+nvmaxCV <- train(CDR3 ~., data = sc1415.final,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:19),
+                    trControl = train.control
+                    )
+nvmaxCV$results
+```
+
+```
+##    nvmax       RMSE  Rsquared        MAE      RMSESD RsquaredSD
+## 1      1 0.05880183 0.3820780 0.04402567 0.003158120 0.03002598
+## 2      2 0.05755215 0.4079943 0.04239540 0.003191844 0.03039607
+## 3      3 0.05712145 0.4169581 0.04152682 0.003342298 0.03351274
+## 4      4 0.05640868 0.4315194 0.04087356 0.003537919 0.03618543
+## 5      5 0.05586732 0.4425443 0.04061163 0.003520209 0.03654763
+## 6      6 0.05549743 0.4500348 0.04034471 0.003465128 0.03775071
+## 7      7 0.05525619 0.4547554 0.04010286 0.003384135 0.03619779
+## 8      8 0.05520880 0.4557831 0.04002321 0.003325895 0.03475417
+## 9      9 0.05505228 0.4588362 0.03987312 0.003326339 0.03499265
+## 10    10 0.05495476 0.4607917 0.03982846 0.003310868 0.03459318
+## 11    11 0.05487428 0.4623041 0.03980066 0.003258281 0.03375367
+## 12    12 0.05474083 0.4649687 0.03969146 0.003189000 0.03270093
+## 13    13 0.05447665 0.4700986 0.03957972 0.003238883 0.03361240
+## 14    14 0.05455456 0.4685896 0.03961175 0.003333075 0.03480664
+## 15    15 0.05457591 0.4681576 0.03963830 0.003314591 0.03446435
+## 16    16 0.05457008 0.4682438 0.03965770 0.003325774 0.03451568
+## 17    17 0.05449215 0.4697857 0.03957562 0.003335199 0.03481860
+## 18    18 0.05449837 0.4696842 0.03952565 0.003339718 0.03508488
+## 19    19 0.05448980 0.4698766 0.03950481 0.003336922 0.03498536
+##          MAESD
+## 1  0.001525026
+## 2  0.001395055
+## 3  0.001537490
+## 4  0.001716406
+## 5  0.001877639
+## 6  0.001788714
+## 7  0.001772634
+## 8  0.001766278
+## 9  0.001791227
+## 10 0.001839421
+## 11 0.001817560
+## 12 0.001755109
+## 13 0.001791195
+## 14 0.001829495
+## 15 0.001806506
+## 16 0.001819638
+## 17 0.001836434
+## 18 0.001853320
+## 19 0.001830632
+```
+
+The # of predictors recommended is 13.  The list of the selected predictors is as follows:
+
+
+```r
+names(coef(nvmaxCV$finalModel,13))
+```
+
+```
+##  [1] "(Intercept)"                "INEXPFTE"                  
+##  [3] "PAR_ED_PCT_1STGEN"          "DEP_INC_AVG"               
+##  [5] "IND_INC_AVG"                "DEBT_MDN"                  
+##  [7] "GRAD_DEBT_MDN"              "CONTROL.Private.nonprofit" 
+##  [9] "CONTROL.Private.for.profit" "PREDDEG.Bachelor.s"        
+## [11] "REGION.Plains"              "REGION.Southeast"          
+## [13] "REGION.Southwest"           "REGION.Rocky.Mtn"
+```
+
+Let's build another model using these variables.
+
+
+```r
+lm2 <- lm(CDR3~INEXPFTE+PAR_ED_PCT_1STGEN+DEP_INC_AVG+IND_INC_AVG+
+          DEBT_MDN+GRAD_DEBT_MDN+CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
+          PREDDEG.Bachelor.s+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn,
+          data=Train)
+
+summary(lm2)
+```
+
+```
+## 
+## Call:
+## lm(formula = CDR3 ~ INEXPFTE + PAR_ED_PCT_1STGEN + DEP_INC_AVG + 
+##     IND_INC_AVG + DEBT_MDN + GRAD_DEBT_MDN + CONTROL.Private.nonprofit + 
+##     CONTROL.Private.for.profit + PREDDEG.Bachelor.s + REGION.Plains + 
+##     REGION.Southeast + REGION.Southwest + REGION.Rocky.Mtn, data = Train)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.20340 -0.03213 -0.00382  0.02702  0.59422 
+## 
+## Coefficients:
+##                              Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                 1.794e-01  9.754e-03  18.397  < 2e-16 ***
+## INEXPFTE                   -7.677e-07  1.605e-07  -4.784 1.78e-06 ***
+## PAR_ED_PCT_1STGEN           8.609e-02  1.475e-02   5.835 5.81e-09 ***
+## DEP_INC_AVG                -8.273e-07  8.751e-08  -9.454  < 2e-16 ***
+## IND_INC_AVG                -1.722e-06  1.423e-07 -12.101  < 2e-16 ***
+## DEBT_MDN                   -2.655e-06  3.603e-07  -7.369 2.08e-13 ***
+## GRAD_DEBT_MDN               2.671e-06  1.968e-07  13.578  < 2e-16 ***
+## CONTROL.Private.nonprofit  -9.639e-03  2.909e-03  -3.313  0.00093 ***
+## CONTROL.Private.for.profit -2.755e-02  2.492e-03 -11.056  < 2e-16 ***
+## PREDDEG.Bachelor.s         -4.995e-02  3.193e-03 -15.642  < 2e-16 ***
+## REGION.Plains               1.511e-02  3.305e-03   4.571 5.01e-06 ***
+## REGION.Southeast            1.436e-02  2.255e-03   6.367 2.15e-10 ***
+## REGION.Southwest            2.209e-02  3.078e-03   7.177 8.49e-13 ***
+## REGION.Rocky.Mtn            2.183e-02  4.832e-03   4.518 6.44e-06 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.05604 on 3910 degrees of freedom
+## Multiple R-squared:  0.4637,	Adjusted R-squared:  0.462 
+## F-statistic: 260.1 on 13 and 3910 DF,  p-value: < 2.2e-16
+```
+
+The RMSEs from the three models above are:
+
+
+```r
+# Full Model - 28 variables
+sqrt(sum(lm1$residuals^2)/nrow(Train))
+```
+
+```
+## [1] 0.05572979
+```
+
+```r
+# Model with 19 variables
+sqrt(sum(step.model1$residuals^2)/nrow(Train))
+```
+
+```
+## [1] 0.05577672
+```
+
+```r
+# Model with 13 variables
+sqrt(sum(lm2$residuals^2)/nrow(Train))
+```
+
+```
+## [1] 0.05593765
+```
+
+While the RMSE of the full model is the lowest of the three, the delta is quite small. Therefore, the `lm2` model will be used for prediction.
+
+The following plot shows that the residuals bounce around the X-axis, confirming the validity of the model.
+
+
+```r
+#plot(lm2$residuals)
+
+ggplot(data=Train,aes(x=as.numeric(row.names(Train)),y=lm2$residuals)) + geom_point(alpha=.2) +
+   xlab("Training Set Observation Index") +
+   ylab("Residual")
+```
+
+![](StudentLoandDefaults_scorecard_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+
+
+```r
+# Prediction
+lm2.pred <- predict(lm2, newdata=Test)
+residualTest <- (lm2.pred - Test$CDR3)
+# RMSE
+sqrt(sum(residualTest^2)/nrow(Test))
+```
+
+```
+## [1] 0.04967096
+```
+
+The RMSE at 0.049671 is lower than that of the training set. 
+
+
+### Model 2 - Classification and Regression Tree (CART)
+
+
+
+```r
+library(caret)
+library(e1071)
+```
+
+```
+## 
+## Attaching package: 'e1071'
+```
+
+```
+## The following object is masked from 'package:Hmisc':
+## 
+##     impute
+```
+
+```
+
+### Model 3 - Random Forests (RF)
+
+
+
+
+

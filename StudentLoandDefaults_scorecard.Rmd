@@ -23,7 +23,7 @@ The US Department of Education publishes the College Scorecard data to help the 
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
 
 library(dplyr)
 library(tidyr)
@@ -39,7 +39,7 @@ This data set is a part of a [data bundle](https://ed-public-download.app.cloud.
 
 # Load the college scorecard data set for academic year 14-15
 
-scorecard1415<- read.csv("MERGED2014_15_PP.csv",na.strings=c("NULL","PrivacySuppressed"))
+scorecard1415 <- read.csv("MERGED2014_15_PP.csv",na.strings=c("NULL","PrivacySuppressed"))
 scorecard1415 <- tbl_df(scorecard1415)
 
 
@@ -213,8 +213,8 @@ Convert `CONTROL`, `PREDDEG`, `DISTANCEONLY`, and `REGION` to factor variables.
 
 ```{r facVars}
 
-control_list = c(1:3)
-control_descs = c("Public",
+control_list <- c(1:3)
+control_descs <- c("Public",
                   "Private nonprofit",
                   "Private for-profit")
 
@@ -225,8 +225,8 @@ sc1415.net <- sc1415.net %>% mutate(CONTROL = factor(CONTROL,levels=control_list
 # 3	Private for-profit
 
 
-preddeg_list = c(1:3)
-preddeg_descs = c(
+preddeg_list <- c(1:3)
+preddeg_descs <- c(
                   "Certificate",
                   "Associate's",
                   "Bachelor's"
@@ -253,8 +253,8 @@ sc1415.net <- sc1415.net %>% mutate(DISTANCEONLY = factor(DISTANCEONLY,levels=di
 #1	Distance-education only
 
 
-region_list = c(0:9)
-region_descs = c("U.S. Service Schools",
+region_list <- c(0:9)
+region_descs <- c("U.S. Service Schools",
                  "New England",
                  "Mid East",
                  "Great Lakes",
@@ -591,3 +591,166 @@ ggplot(sc1415.net,aes(y=CDR3,x=PAR_ED_PCT_1STGEN, col=REGION)) +
 
 
 ```
+
+
+## Categorical Variable Conversion to Dummy Variables
+
+Before building modeling, categorical variables need to be converted to dummy variables. `CONTROL`, `PREDDEG`, and `REGION` will be converted. `DISTANCEONLY` has been dropped as its values are highly skewed. 
+
+```{r}
+
+library(caret)
+
+dummies <- dummyVars("~ CONTROL + PREDDEG + REGION", data=sc1415.net,fullRank=TRUE)
+dummies <- data.frame(predict(dummies,newdata=sc1415.net))
+sc1415.final <- as.data.frame(cbind(sc1415.net,dummies))
+
+# remove variables unused in modeling building
+
+sc1415.final$OPEID6 <-  NULL
+sc1415.final$STABBR <-  NULL
+sc1415.final$INSTNM <-  NULL
+
+sc1415.final$CONTROL <- NULL
+sc1415.final$REGION  <- NULL
+sc1415.final$PREDDEG <- NULL
+sc1415.final$DISTANCEONLY <- NULL
+
+```
+
+## Predictive Model Building
+
+Now, the `sc1415.final` data frame is all set for building models.  It consists of `r nrow(sc1415.final)` observations and `r ncol(sc1415.final)-1` independent variables.  The `CDR3` is the outcome variable.  The goal is to predict student loan default rates.
+
+Let's split the data frame to training and test sets.
+
+```{r}
+
+library(caTools)
+set.seed(100)
+split_vec <- sample.split(sc1415.final$CDR3,SplitRatio=.75)
+Train <- sc1415.final[split_vec,]
+Test <- sc1415.final[!(split_vec),]
+
+
+```
+
+
+### Model 1 - Linear Regression
+
+#### Full MOdel 
+In this modeling, all independent variables are thrown in. Uninfluential variables are eliminated with the `stepAIC()` function from the `MASS` package.  
+
+```{r}
+lm1 <- lm(CDR3~.,data=Train)
+summary(lm1)
+
+library(MASS)
+step.model1 <- stepAIC(lm1, direction = "both", 
+                      trace = FALSE)
+summary(step.model1)
+
+```
+It reduces the number of predictors to `r step.model1$rank` from `r ncol(sc1415.final)`.
+
+Alternatively, let's try the `regsubsets()` that provides the tuning parameter `nvmax` for the number of predictors. In order to optimize `nvmax`, we can use k-fold cross-validation. Click [here](http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/) for details and an example.
+
+```{r}
+set.seed(100)
+
+k = 10
+train.control <- trainControl(method = "cv", number = k)
+
+nvmaxCV <- train(CDR3 ~., data = sc1415.final,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:19),
+                    trControl = train.control
+                    )
+nvmaxCV$results
+
+```
+
+The # of predictors recommended is `r nvmaxCV$bestTune`.  The list of the selected predictors is as follows:
+
+```{r}
+names(coef(nvmaxCV$finalModel,13))
+
+```
+
+Let's build another model using these variables.
+
+```{r}
+
+lm2 <- lm(CDR3~INEXPFTE+PAR_ED_PCT_1STGEN+DEP_INC_AVG+IND_INC_AVG+
+          DEBT_MDN+GRAD_DEBT_MDN+CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
+          PREDDEG.Bachelor.s+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn,
+          data=Train)
+
+summary(lm2)
+```
+
+The RMSEs from the three models above are:
+
+```{r}
+
+# Full Model - 28 variables
+sqrt(sum(lm1$residuals^2)/nrow(Train))
+
+# Model with 19 variables
+sqrt(sum(step.model1$residuals^2)/nrow(Train))
+
+# Model with 13 variables
+sqrt(sum(lm2$residuals^2)/nrow(Train))
+
+```
+
+While the RMSE of the full model is the lowest of the three, the delta is quite small. Therefore, the `lm2` model will be used for prediction.
+
+The following plot shows that the residuals bounce around the X-axis, confirming the validity of the model.
+
+```{r}
+
+#plot(lm2$residuals)
+
+ggplot(data=Train,aes(x=as.numeric(row.names(Train)),y=lm2$residuals)) + geom_point(alpha=.2) +
+   xlab("Training Set Observation Index") +
+   ylab("Residual")
+
+```
+
+```{r}
+
+# Prediction
+lm2.pred <- predict(lm2, newdata=Test)
+residualTest <- (lm2.pred - Test$CDR3)
+# RMSE
+sqrt(sum(residualTest^2)/nrow(Test))
+
+```
+
+The RMSE at `r sqrt(sum(residualTest^2)/nrow(Test))` is lower than that of the training set. 
+
+
+### Model 2 - Classification and Regression Tree (CART)
+
+
+```{r}
+
+
+library(caret)
+library(e1071)
+
+
+
+```
+
+```
+
+### Model 3 - Random Forests (RF)
+
+```{r}
+
+```
+
+
+
