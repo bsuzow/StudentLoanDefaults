@@ -835,7 +835,7 @@ Test <- sc1415.final[!(split_vec),]
 ### Model 1 - Linear Regression
 
 #### Full MOdel 
-In this modeling, all independent variables are thrown in. Uninfluential variables are eliminated with the `stepAIC()` function from the `MASS` package.  
+In this modeling, all independent variables are thrown in. Subsequently, uninfluential variables are eliminated with the `stepAIC()` function from the `MASS` package.  
 
 
 ```r
@@ -1118,7 +1118,7 @@ sqrt(sum(lm2$residuals^2)/nrow(Train))
 
 While the RMSE of the full model is the lowest of the three, the delta is quite small. Therefore, the `lm2` model will be used for prediction.
 
-The following plot shows that the residuals bounce around the X-axis, confirming the validity of the model.
+The following plot shows that the residuals bounce around y=0, confirming the validity of the model.
 
 
 ```r
