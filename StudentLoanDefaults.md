@@ -157,7 +157,7 @@ names(sc1415)[colSums(is.na(sc1415.net))>0]
 ## character(0)
 ```
 
-The total number of rows has reduced from 6423 to 5209. 
+The total number of rows has reduced from 6423 to 5209 and the number of columns is down to 23.  
 The summary statistics of default rates (`CDR3`) are comparable amongst the three data sets -- with graduate schools present, without grad schools, and without missing values.  We will move ahead with the the `sc1415.net` data frame for the analysis.  Please note that unclassified institutions (`PREDDEG = 0`) have been removed at the missing-value row elimination.
 
 
@@ -425,7 +425,7 @@ ggplot(sc1415.net,aes(x=MD_FAMINC,y=CDR3*100)) +
 
 
 ```r
-# Percentage first-generation students vs default rate by school ownership
+# Percentage first-generation students vs default rate by school ownership type
 
 ggplot(sc1415.net,aes(y=CDR3*100,x=PAR_ED_PCT_1STGEN*100, col=CONTROL)) +
    geom_point(alpha=.1) +
@@ -437,7 +437,7 @@ ggplot(sc1415.net,aes(y=CDR3*100,x=PAR_ED_PCT_1STGEN*100, col=CONTROL)) +
 
 ![](StudentLoanDefaults_files/figure-html/ParEdbyCONTROL-1.png)<!-- -->
 
-There is a positive correlation between default rate and proportion of students who reported as first generation in getting higher education. For-profit private schools seem to have a higher mean of the proportions. 
+There is a positive correlation between default rate and the proportion of students who reported as first generation in getting higher education. For-profit private schools seem to have a higher mean of the proportions. 
 
 *** 
 
@@ -479,7 +479,7 @@ A positive correlation between Pell Grant recipient percentage and default rate 
 
 ***
 
-#### Instructional Expenditure Per Student
+#### Instructional Expenditure Per Student vs Default Rate
 
 
 ```r
@@ -512,7 +512,7 @@ dummies <- dummyVars("~ CONTROL + PREDDEG + REGION", data=sc1415.net,fullRank=TR
 dummies <- data.frame(predict(dummies,newdata=sc1415.net))
 sc1415.final <- as.data.frame(cbind(sc1415.net,dummies))
 
-# remove variables unused in modeling building
+# remove variables unused in model building
 
 sc1415.final$OPEID6 <-  NULL
 sc1415.final$STABBR <-  NULL
@@ -621,7 +621,7 @@ nvmaxCV$results
 ## 27 0.001873109
 ```
 
-The # of predictors recommended is 24. At level 19, a dip is observed. The RMSE delta between 19 and 24 nvmax levels is negligible. In the spirit of keeping the model as simply as possible, we will use 19 variables. 
+While the # of predictors recommended is 24, a dip is observed at 19. The RMSE delta between 19 and 24 nvmax levels is negligible. In the spirit of keeping the model as simply as possible, we will use 19 variables. 
 
 The top 19 predictors are as follows:
 
@@ -647,11 +647,6 @@ Let's build a linear regression model with these variables.
 
 
 ```r
-# lm2 <- lm(CDR3~INEXPFTE+PAR_ED_PCT_1STGEN+DEP_INC_AVG+IND_INC_AVG+
-#           DEBT_MDN+GRAD_DEBT_MDN+CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
-#           PREDDEG.Bachelor.s+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn,
-#           data=Train)
-
 lm1 <- lm(CDR3 ~ UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
           DEP_INC_AVG+IND_INC_AVG+
           DEBT_MDN+GRAD_DEBT_MDN+WDRAW_DEBT_MDN+
@@ -660,16 +655,6 @@ lm1 <- lm(CDR3 ~ UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
           REGION.Mid.East+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn+REGION.Outlying.Areas,
 
           data=Train)
-
-# lm1 <- lm(CDR3 ~ UGDS+TUITFTE+INEXPFTE+PCTPELL+PCTFLOAN+PAR_ED_PCT_1STGEN+
-#           DEP_INC_AVG+IND_INC_AVG+
-#           DEBT_MDN+GRAD_DEBT_MDN+WDRAW_DEBT_MDN+
-#              FAMINC+MD_FAMINC+CDR3_DENOM+
-#           CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
-#           PREDDEG.Associate.s+PREDDEG.Bachelor.s+
-#           REGION.Mid.East+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn+REGION.Outlying.Areas,
-#           
-#           data=Train)
 
 summary(lm1)
 ```
@@ -740,6 +725,8 @@ ggplot(data=Train,aes(x=as.numeric(row.names(Train)),y=lm1$residuals)) + geom_po
 
 ![](StudentLoanDefaults_files/figure-html/residualPlot-1.png)<!-- -->
 
+Now, run the model on the `Test` set.
+
 
 ```r
 # Prediction
@@ -752,13 +739,12 @@ sqrt(sum(residualTest^2)/nrow(Test))
 ```
 ## [1] 0.05000767
 ```
-
-The RMSE at 0.05 is lower than that of the training set (0.0555341).
+The RMSE at 0.05 is a bit lower than that of the training set (0.0555341).
 
 
 ### Model 2 - Classification and Regression Tree (CART)
 
-In this modeling, we will create a decision tree whose end nodes of branches show average default rates. Let's use all predictors.
+In this modeling, we will create a decision tree whose end nodes of branches show average default rates. Let's build a model using all predictors, plot the resulting tree and compute the RMSE.
 
 
 ```r
@@ -779,6 +765,7 @@ prp(defaultsTree)  # plotting the tree
 predictCART = predict(defaultsTree,newdata=Test)    
 
 residualTestCART <- (predictCART- Test$CDR3)
+
 # RMSE
 sqrt(sum(residualTestCART^2)/nrow(Test))
 ```
@@ -787,32 +774,23 @@ sqrt(sum(residualTestCART^2)/nrow(Test))
 ## [1] 0.05141852
 ```
 
-The tree references only 4 variables -- `DEP_INC_AVG`, `IND_INC_AVG`, `TUITFTE`, and `GRAD_DEB`.  
+Interestingly, the tree references only 4 variables -- `DEP_INC_AVG`, `IND_INC_AVG`, `TUITFTE`, and `GRAD_DEB`.  The descriptions of these columns are as follows:
 
     `DEP_INC_AVG`: Average family income of dependent students in real 2015 dollars    
     `IND_INC_AVG`: Average family income of independent students in real 2015 dollars   
     `TUITFTE`: Net tuition revenue per full-time equivalent student  
     `GRAD_DEB_MDN`: The median debt for students who have completed  
 
-The RMSE is 0.0514 which is higher than the regression model's (0.05).
+The RMSE is 0.0514 which is higher than the linear regression model's (0.05).
 
 
 ### Model 3 - Random Forest (RF)
 
-Random Forest lacks interpretability, but results in a better accuracy.  
+Moving on to the 3rd model, Random Forest lacks interpretability, but results in a better accuracy.  
 
 
 ```r
 library("randomForest")
-
-# defaultsForest = randomForest(CDR3 ~
-#                      INEXPFTE + PAR_ED_PCT_1STGEN + DEP_INC_AVG +
-#                      IND_INC_AVG + DEBT_MDN + GRAD_DEBT_MDN + CONTROL.Private.nonprofit +
-#                      CONTROL.Private.for.profit + PREDDEG.Bachelor.s + REGION.Plains +
-#                      REGION.Southeast + REGION.Southwest + REGION.Rocky.Mtn,
-#                      data=Train,
-#                      nodesize=25,
-#                      ntree=200)
 
 defaultsForest = randomForest(CDR3 ~
           UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
@@ -857,15 +835,15 @@ Its RMSE is indeed the lowest of the 3 models at 0.045.  The model identified th
 
 # Inferences and Insights
 
-* As noted in the Random Forest model, the top predictors for default rate are familly income, parent education level, loan principle amount, institution's predominant degree, percentage of Pell Grant recipients, instructional spending, debt amount for withdrawn students.    
-* A $10,000 increase in average family income of dependent students (`DEP_INC_AVG`) is associated with an decrease in default rate by 0.8% provided all other variables being fixed.  
-* A $10,000 increase in average family income of independent students (`IND_INC_AVG`) is associated with an decrease in default rate by 1.8% provided all other variables being fixed.  
+* As noted in the Random Forest model, the top predictors for default rate are familly income, parent education level, loan principle amount, institution's predominant degree (Bachelor's), percentage of Pell Grant recipients, instructional spending, debt amount for withdrawn students.    
+* A $10,000 increase in average family income of dependent students (`DEP_INC_AVG`) is associated with a decrease in default rate by 0.8% provided all other variables being fixed.  
+* A $10,000 increase in average family income of independent students (`IND_INC_AVG`) is associated with a decrease in default rate by 1.8% provided all other variables being fixed.  
 * One point increase in the percentage of first generation students (`PAR_ED_PCT_1STGEN` - those whose parents' education level is below post-secondary) is associated with an increase in default rate by 7.8% provided all other variables being fixed.  
-* A $10,000 increase in median loan amount (`DEBT_MDN`) is associated with a **decrease** in default rate by 2.8% provided all other variables being fixed.  
+* A $10,000 **increase** in median loan amount (`DEBT_MDN`) is associated with a **decrease** in default rate by 2.8% provided all other variables being fixed.  
 * One percent increase in the Federal Pell Grant participation rate (`PCTPELL`) is associated with an increase in default rate by 1.35% provided all other variables being fixed.  
-* Associate's as predominant degree(`PREDDEG.Associate.s`) is associated with an increase in default rate (relative to Certificate as predominant) .  On the other hand, Bachelor's degree as predominant degree (`PREDDEG.Bachelor.s`) is associated with a decrease in default rate (relative to Certificate as predominant degree).  
+* Associate's as predominant degree (`PREDDEG.Associate.s`) is associated with an increase in default rate (relative to Certificate as predominant degree) .  On the other hand, Bachelor's degree as predominant degree (`PREDDEG.Bachelor.s`) is associated with a decrease in default rate (relative to Certificate as predominant degree).  
 * $10,000 expensed in instructional resources per FTE student (`INEXPFTE`) is associated with a decrease in default rate by 0.8% provided all other variables being fixed.   
-* Relative to the New England region, the Plains, Southeast, Southwest and Rocky Mountain regions are associated with an increase in default rate whereas the Mid East and Outlying Areas regions with a decrase.   
+* Relative to the New England region, the Plains, Southeast, Southwest and Rocky Mountain regions are associated with an increase in default rate whereas the Mid East and Outlying Areas regions with a decrease.   
 * The CART model tree illustrates 12% or higher average default rate for the institutions whose the family income level for independent students is below $22,000 and for dependent students below $57,000. [The annual median income for high school diploma holders is about $25,000](http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html). This group of institutions accounts for almost 60% of the sample -- 3008 out of 5209.   
 
 
