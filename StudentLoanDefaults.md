@@ -11,13 +11,13 @@ output:
 
 Student loan debt (SLD) total in the US reached a staggering number in 1.5 trillion dollars, borrowed by 44 million people. It is 2.4 times larger than the total of credit card debt.  The SLD total in 2008 was 640 billion dollars [which ballooned to 1.2 trillion by 2015](https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/).  
 
-While [the return on investment of higher education (HED) is well known and documented] (https://college-education.procon.org/), student loans accumulated for financing higher education are reported as societal issues such as [reasons for divorce](https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html), financial dependence on parents, and lack of home ownership observed in Gen-Y.  
+While [the return on investment of higher education (HED) is well known and documented](https://college-education.procon.org/), student loans accumulated for financing higher education are reported as societal issues such as [reasons for divorce](https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html), financial dependence on parents, and lack of home ownership amongst Gen-Y.  
 
 In order for a student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
 
 The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics including default rates and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data to achieve the following objectives:
 
-- Explore the data to ascertain correlations the data is telling us. 
+- Explore in order to ascertain correlations the data is telling us. 
 - Find out strong predictors influencing the default rates.
 - Build a predictive model for the default rates.
 
@@ -30,7 +30,7 @@ The US Department of Education publishes the College Scorecard data to help the 
 
 The data set is a part of a [data bundle](https://ed-public-download.app.cloud.gov/downloads/CollegeScorecard_Raw_Data.zip) published by the US Department of Education.  This analysis utilizes the data pertinent to the 2014-15 year (`MERGED2014_15_PP.csv`). The full data documentation is found [here](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf).
 
-While it is labeled 2014-15, The data set reports the 2012 cohort for loan repayment tracking purposes. The cohort is defined as the group whose members entered repayment between October 2011 and September 2012, and went into a default status by September 2014.  
+While it is labeled 2014-15, the data set reports the 2012 cohort for loan repayment tracking purposes. The cohort is defined as the group whose members entered repayment between October 2011 and September 2012 (FY2012), and went into a default status by September 2014.  
 
 
 
@@ -47,7 +47,6 @@ scorecard1415 <- tbl_df(scorecard1415) # converting to a tibble
 Clean up and tidy the data set for exploratory data analysis and modeling.
 
 - Select variables relevant to this study.
-- Standardize column names if necessary.
 - Inspect presence of missing value.
 - Determin missing value treatment strategy if applicable.
 - Transform data types appropriately.
@@ -59,8 +58,7 @@ Two issues are noticed immediately.
 1. The number of variables/features is overwhelmingly large at 1700+.
 2. Many observations/rows have missing values. 
 
-To address the first issue, the [data element list](https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx) has been reviewed. Using the [data documentation](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf) as guidelines, the variables are selected in the following code block:
-
+To address the first issue, the [data element list](https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx) has been reviewed. Using the [data documentation](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf) as guideline, the variables are selected.
 
 
 ```r
@@ -76,14 +74,14 @@ sc1415.all <- scorecard1415 %>% select(OPEID6,INSTNM,STABBR,NUMBRANCH,CONTROL,PR
 
 The column names are kept as provided in the data set. In the modeling section, the names of the columns selected as strong predictors will be described. 
 
-The `CDR3` column reports the average default rates of the students who entered repayment in FYR 2012 and defaulted by FYR 2014). Hence, the observations with missing values in the column cannot be used for this analysis.  They are removed. 
+The `CDR3` column reports the average default rates of the students who entered repayment in FY2012 and defaulted within the tracking period (October 2011 through September 2014). Hence, the observations with missing values in the column cannot be used for this analysis.  They are removed. 
 
 
 ```r
 sc1415 <- sc1415.all %>% filter(!is.na(CDR3))
 ```
 
-As for missing values, it's observed that they are rather concentrated on the schools classified as stand alone graduate institution. Let's remove them from the analysis.
+As for missing values, it's observed that they are rather concentrated on the schools classified as stand alone graduate institution. Let's remove them from the data frame.
 
 
 ```r
@@ -92,7 +90,7 @@ sc1415 <- sc1415 %>% filter(PREDDEG!=4)
 
 ## Missing Values
 
-After graduates schools are removed, are there any columns with missiong values?  
+After graduates schools are removed, are there any columns with missing values?  
 
 
 ```r
@@ -114,7 +112,7 @@ names(sc1415)[colSums(is.na(sc1415))>0]
 ## [34] "POVERTY_RATE"      "MN_EARN_WNE_P10"   "MD_EARN_WNE_P10"
 ```
 
-The answer is yes. 13 of 45 columns still have missing values.  Let's compute their proportions and select those under 10%.
+Yes, 36 of 45 columns still have missing values.  Let's compute their proportions and select those under 10%.
 
 
 ```r
@@ -122,7 +120,7 @@ naProportion <- apply(sc1415,2,function(x){sum(is.na(x))/nrow(sc1415)})
 naProportion <- naProportion[naProportion<.1]
 ```
 
-Let's confirm that all `CDR3` (default rate) and `CDR3_DENOM` (the number of students in the cohort, i.e. the denominator in the default rate calculation) values are numeric.
+Let's confirm that all `CDR3` (default rate) and `CDR3_DENOM` (the number of students in the FY2012  cohort, i.e. the denominator in the default rate calculation) values are numeric.
 
 
 ```r
@@ -272,7 +270,7 @@ sc1415.net <- sc1415.net %>% mutate(REGION = factor(REGION,levels=region_list,
 
 ## Quick Descriptive Statistics
 
-The total number of students in FYR 2012 repayment cohort is 34.6 million. Of these, 31 million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1289825 with the standard deviation of 0.0748062.
+The total number of students in the FY2012 repayment cohort is 34.6 million. Of these, 31 million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1289825 with the standard deviation of 0.0748062.
 
 Total count, mean, median and standard deviation of default rates (`CDR3`) by `CONTROL` (institution's ownership type) are as follows:
 
@@ -332,8 +330,6 @@ sc1415.net %>% group_by(PREDDEG) %>% summarize(n(),mean(CDR3),median(CDR3),sd(CD
 
 #### Histograms
 
-Let's draw some histograms.  The longer right tails observed in the plots are accounted for by 112549 schools which reported 30% or above default rates. It is 2160.7% of the sample size. Institutions with 30% or higher default rates for three years in a row or 40%+ for a single year lose federal loan eligibility.
-
 
 ```r
 ggplot(sc1415.net,aes(x=CDR3*100)) + 
@@ -360,6 +356,8 @@ ggplot(sc1415.net,aes(x=CDR3*100, fill=PREDDEG)) +
 ```
 
 ![](StudentLoanDefaults_files/figure-html/Histograms-3.png)<!-- -->
+
+The longer right tails observed in the plots are accounted for by 80 schools which reported 30% or above default rates. It is 1.5% of the sample size. Institutions with 30% or higher default rates for three years in a row or 40%+ for a single year lose federal loan eligibility.
 
 ***
 
