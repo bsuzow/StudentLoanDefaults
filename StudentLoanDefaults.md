@@ -24,6 +24,8 @@ The US Department of Education publishes the College Scorecard data to help the 
 
 
 
+***
+
 # Data Load
 
 The data set is a part of a [data bundle](https://ed-public-download.app.cloud.gov/downloads/CollegeScorecard_Raw_Data.zip) published by the US Department of Education.  This analysis utilizes the data pertinent to the 2014-15 year (`MERGED2014_15_PP.csv`). The full data documentation is found [here](https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf).
@@ -90,7 +92,7 @@ sc1415 <- sc1415 %>% filter(PREDDEG!=4)
 
 ## Missing Values
 
-After graduates schools are removed, are there any columns with missiong values?
+After graduates schools are removed, are there any columns with missiong values?  
 
 
 ```r
@@ -359,6 +361,7 @@ ggplot(sc1415.net,aes(x=CDR3*100, fill=PREDDEG)) +
 
 ![](StudentLoanDefaults_files/figure-html/Histograms-3.png)<!-- -->
 
+***
 
 #### Average Family Income of Dependent Students vs Default Rate
 
@@ -373,6 +376,7 @@ ggplot(sc1415.net,aes(x=DEP_INC_AVG,y=CDR3*100)) +
 
 ![](StudentLoanDefaults_files/figure-html/FamIncomeDep-1.png)<!-- -->
 
+***
 
 #### Average Family Income of Independent Students vs Default Rate
 
@@ -387,6 +391,8 @@ ggplot(sc1415.net,aes(x=IND_INC_AVG,y=CDR3*100)) +
 
 ![](StudentLoanDefaults_files/figure-html/FamIncomeInd-1.png)<!-- -->
 
+***
+
 #### Loan Amount (Median) vs Default Rate
 
 
@@ -400,6 +406,8 @@ ggplot(sc1415.net,aes(x=DEBT_MDN,y=CDR3*100)) +
 
 ![](StudentLoanDefaults_files/figure-html/LoanAmt-1.png)<!-- -->
 
+*** 
+
 #### Family Income (Median) vs Default Rate
 
 
@@ -412,6 +420,8 @@ ggplot(sc1415.net,aes(x=MD_FAMINC,y=CDR3*100)) +
 ```
 
 ![](StudentLoanDefaults_files/figure-html/FamIncome-1.png)<!-- -->
+
+*** 
 
 #### Percentage of First Generation Students vs Default Rate by School Ownership Type
 
@@ -431,6 +441,8 @@ ggplot(sc1415.net,aes(y=CDR3*100,x=PAR_ED_PCT_1STGEN*100, col=CONTROL)) +
 
 There is a positive correlation between default rate and proportion of students who reported as first generation in getting higher education. For-profit private schools seem to have a higher mean of the proportions. 
 
+*** 
+
 #### Percentage of First Generation Students vs Default Rate by Predominant Degree Type
 
 
@@ -447,24 +459,46 @@ ggplot(sc1415.net,aes(y=CDR3*100,x=PAR_ED_PCT_1STGEN*100, col=PREDDEG)) +
 
 As expected, Associate's and Certificate institutions report higher proportions of first generation students. Regardless of degree types, the parents education level correlates to default rate.
 
+***
 
-#### Federal Student Loan vs Default Rate by School Ownership Type
+#### Percentage of Pell Grant Recipients vs Default Rate by Institution Type based on Predominant Degrees
 
 
 ```r
-# Percent of all undergraduate students receiving a federal student loan
+# Percent of all undergraduate students receiving Pell Grant
 
-ggplot(sc1415.net,aes(y=CDR3*100,x=PCTFLOAN*100, col=CONTROL)) +
+ggplot(sc1415.net,aes(y=CDR3*100,x=PCTPELL*100, col=PREDDEG)) +
    geom_point(alpha=.1) +
-   facet_grid(CONTROL~.) + 
+   facet_grid(PREDDEG~.) + 
    geom_smooth(col="black", method="lm") +
-   xlab("Percentage of Students Receiving Federal Loan (%)") +
+   xlab("Percentage of Students Receiving Pell Grant (%)") +
    ylab("Default Rate (%)")
 ```
 
-![](StudentLoanDefaults_files/figure-html/FedLoanbyCONTROL-1.png)<!-- -->
+![](StudentLoanDefaults_files/figure-html/PellGrantByPREDDEG-1.png)<!-- -->
 
-For-profit private institutions report higher fed loan participation rates. The higher participation rates observed in private institutions do  not appear to correlate to default rate. 
+A positive correlation between Pell Grant recipient percentage and default rate is more prominent at Bachelor's degree institutions.  
+
+***
+
+#### Instructional Expenditure Per Student
+
+
+```r
+# Instructional Expenditure per FTE student
+
+ggplot(sc1415.net,aes(y=CDR3*100,x=INEXPFTE, col=PREDDEG)) +
+   geom_point(alpha=.1) +
+   facet_grid(PREDDEG~.) + 
+   geom_smooth(col="black", method="lm") +
+   xlab("Instructional Expenditure Per Student") +
+   ylab("Default Rate (%)")
+```
+
+![](StudentLoanDefaults_files/figure-html/INEXPFTE-1.png)<!-- -->
+
+
+There is a negative correlation between instructional spending and default rate regardless of predominant degree types.  
 
 ***
 
@@ -475,20 +509,7 @@ Before building models, categorical variables (`CONTROL`, `PREDDEG`, and `REGION
 
 ```r
 library(caret)
-```
 
-```
-## 
-## Attaching package: 'caret'
-```
-
-```
-## The following object is masked from 'package:survival':
-## 
-##     cluster
-```
-
-```r
 dummies <- dummyVars("~ CONTROL + PREDDEG + REGION", data=sc1415.net,fullRank=TRUE)
 dummies <- data.frame(predict(dummies,newdata=sc1415.net))
 sc1415.final <- as.data.frame(cbind(sc1415.net,dummies))
@@ -516,13 +537,6 @@ Let's split the data frame to training and test sets.  They are `Train` and `Tes
 
 ```r
 library(caTools)
-```
-
-```
-## Warning: package 'caTools' was built under R version 3.4.2
-```
-
-```r
 set.seed(100)
 split_vec <- sample.split(sc1415.final$CDR3,SplitRatio=.75)
 Train <- sc1415.final[split_vec,]
@@ -752,13 +766,7 @@ In this modeling, we will create a decision tree whose end nodes of branches sho
 ```r
 library(rpart)
 library(rpart.plot)
-```
 
-```
-## Warning: package 'rpart.plot' was built under R version 3.4.3
-```
-
-```r
 defaultsTree = rpart(CDR3 ~ .,
                      data=Train
                     
@@ -767,7 +775,7 @@ defaultsTree = rpart(CDR3 ~ .,
 prp(defaultsTree)  # plotting the tree
 ```
 
-![](StudentLoanDefaults_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](StudentLoanDefaults_files/figure-html/CART-1.png)<!-- -->
 
 ```r
 predictCART = predict(defaultsTree,newdata=Test)    
@@ -798,44 +806,7 @@ Random Forest lacks interpretability, but results in a better accuracy.
 
 ```r
 library("randomForest")
-```
 
-```
-## Warning: package 'randomForest' was built under R version 3.4.3
-```
-
-```
-## randomForest 4.6-12
-```
-
-```
-## Type rfNews() to see new features/changes/bug fixes.
-```
-
-```
-## 
-## Attaching package: 'randomForest'
-```
-
-```
-## The following object is masked from 'package:dplyr':
-## 
-##     combine
-```
-
-```
-## The following object is masked from 'package:Hmisc':
-## 
-##     combine
-```
-
-```
-## The following object is masked from 'package:ggplot2':
-## 
-##     margin
-```
-
-```r
 # defaultsForest = randomForest(CDR3 ~
 #                      INEXPFTE + PAR_ED_PCT_1STGEN + DEP_INC_AVG +
 #                      IND_INC_AVG + DEBT_MDN + GRAD_DEBT_MDN + CONTROL.Private.nonprofit +
@@ -871,7 +842,7 @@ sqrt(sum(residualTestForest^2)/nrow(Test))
 varImpPlot(defaultsForest)
 ```
 
-![](StudentLoanDefaults_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](StudentLoanDefaults_files/figure-html/RF-1.png)<!-- -->
 
 Its RMSE is indeed the lowest of the 3 models at 0.045.  The model identified the following seven as the top predictors:
 
@@ -886,20 +857,21 @@ Its RMSE is indeed the lowest of the 3 models at 0.045.  The model identified th
 
 *** 
 
-# Intepretations
+# Inferences and Insights
 
-Drawn from the models, the following insights are inferred:
+* As noted in the Random Forest model, the top predictors for default rate are familly income, parent education level, loan principle amount, institution's predominant degree, percentage of Pell Grant recipients, instructional spending, debt amount for withdrawn students.    
+* A $10,000 increase in average family income of dependent students (`DEP_INC_AVG`) is associated with an decrease in default rate by 0.8% provided all other variables being fixed.  
+* A $10,000 increase in average family income of independent students (`IND_INC_AVG`) is associated with an decrease in default rate by 1.8% provided all other variables being fixed.  
+* One point increase in the percentage of first generation students (`PAR_ED_PCT_1STGEN` - those whose parents' education level is below post-secondary) is associated with an increase in default rate by 7.8% provided all other variables being fixed.  
+* A $10,000 increase in median loan amount (`DEBT_MDN`) is associated with a **decrease** in default rate by 2.8% provided all other variables being fixed.  
+* One percent increase in the Federal Pell Grant participation rate (`PCTPELL`) is associated with an increase in default rate by 1.35% provided all other variables being fixed.  
+* Associate's as predominant degree(`PREDDEG.Associate.s`) is associated with an increase in default rate (relative to Certificate as predominant) .  On the other hand, Bachelor's degree as predominant degree (`PREDDEG.Bachelor.s`) is associated with a decrease in default rate (relative to Certificate as predominant degree).  
+* $10,000 expensed in instructional resources per FTE student (`INEXPFTE`) is associated with a decrease in default rate by 0.8% provided all other variables being fixed.   
+* Relative to the New England region, the Plains, Southeast, Southwest and Rocky Mountain regions are associated with an increase in default rate whereas the Mid East and Outlying Areas regions with a decrase.   
+* The CART model tree illustrates 12% or higher average default rate for the institutions whose the family income level for independent students is below $22,000 and for dependent students below $57,000. [The annual median income for high school diploma holders is about $25,000](http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html). This group of institutions accounts for almost 60% of the sample -- 3008 out of 5209.   
 
-_ As noted in the Random Forest model, the top predictors for default rate are familly income, parent education level, loan principle amount, institution's predominant degree, percentage of Pell Grant recipients, instructional spending, debt amount for withdrawn students.    
-- A $1000 increase in average family income of dependent students (`DEP_INC_AVG`) is associated with an decrease in default rate by 0.08% provided all other variables being fixed. 
-- A $1000 increase in average family income of independent students (`IND_INC_AVG`) is associated with an decrease in default rate by 0.18% provided all other variables being fixed. 
-- One point increase in the percentage of first generation students (`PAR_ED_PCT_1STGEN` - those whose parents' education level is below post-secondary) is associated with an increase in default rate by 7.78% provided all other variables being fixed.
-- A $1000 increase in median loan amount (`DEBT_MDN`) is associated with a **decrease** in default rate by 0.28% provided all other variables being fixed. 
-- One percent increase in the Federal Pell Grant participation rate (`PCTPELL`) is associated with an increase in default rate by 1.35% provided all other variables being fixed.  
-- Associate's as predominant degree(`PREDDEG.Associate.s`) is associated with an increase in default rate (relative to Certificate as predominant) .  On the other hand, Bachelor's degree as predominant degree (`PREDDEG.Bachelor.s`) is associated with a decrease in default rate (relative to Certificate as predominant).  
-- $1000 expensed in instructional resources per FTE student (`INEXPFTE`) is associated with a decrease in default rate by 0.08% provided all other variables being fixed. 
-- Relative to the New England region, the Plains, Southeast, Southwest and Rocky Mountain regions are associated with an increase in default rate whereas the Mid East and Outlying Areas regions with a decrase.
 
+***
 
 # References
 
@@ -911,7 +883,10 @@ https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bus
 
 https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx  
 
+http://www.ncsl.org/research/labor-and-employment/state-minimum-wage-chart.aspx   
+
 https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf  
 
 http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/  
 
+http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html  
