@@ -12,13 +12,9 @@ Introduction
 - SLD as societal issues such as divorce, and lack of financial independence and home ownership.
 - Average student loan default rate is 12% for FY2012 tracking cohort.
 - Institutions at high default rate (30% or above) risking the loss of federal loan eligibility.
+- What are the strong predictors for the default rate?
+- Can we build a predictive model?
 
-Questions
-========================================================
-
-- What are the strong positive predictors associated with student loan default rates?
-- What are the strong negative predictors?
-- What can we do about them?
 
 Data Source and Wrangling
 ========================================================
