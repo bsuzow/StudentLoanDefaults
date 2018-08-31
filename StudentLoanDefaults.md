@@ -51,7 +51,7 @@ Clean up and tidy the data set for exploratory data analysis and modeling.
 - Determin missing value treatment strategy if applicable.
 - Transform data types appropriately.
 
-## Select Relevant Variables 
+#### Select Relevant Variables 
 
 Two issues are noticed immediately. 
 
@@ -78,17 +78,17 @@ The `CDR3` column reports the average default rates of the students who entered 
 
 
 ```r
-sc1415 <- sc1415.all %>% filter(!is.na(CDR3))
+sc1415.CDR3 <- sc1415.all %>% filter(!is.na(CDR3))
 ```
 
 As for missing values, it's observed that they are rather concentrated on the schools classified as stand alone graduate institution. Let's remove them from the data frame.
 
 
 ```r
-sc1415 <- sc1415 %>% filter(PREDDEG!=4)
+sc1415 <- sc1415.CDR3 %>% filter(PREDDEG!=4)
 ```
 
-## Missing Values
+#### Missing Values
 
 After graduates schools are removed, are there any columns with missing values?  
 
@@ -139,7 +139,7 @@ Let's confirm that all `CDR3` (default rate) and `CDR3_DENOM` (the number of stu
 ## [1] FALSE
 ```
 
-## Variable Selection
+#### Variable Selection
 
 Now select the variables with less than 10% missing value. Further clean up by eliminating the rows with missing values (Caveat: This is a simpliest approach of treating missing values.  This may have to be revisited in pursuit of a more efficient strategy.)
 
@@ -190,7 +190,7 @@ summary(sc1415.net$CDR3)
 
 ***
 
-## Categorical Variable Conversion to Factor Variables
+#### Categorical Variable Conversion to Factor Variables
 
 Convert `CONTROL`, `PREDDEG`, `DISTANCEONLY`, and `REGION` to factor variables with proper labels.
 
@@ -267,10 +267,9 @@ sc1415.net <- sc1415.net %>% mutate(REGION = factor(REGION,levels=region_list,
 
 # Exploratory Data Analysis
 
+#### Quick Descriptive Statistics
 
-## Quick Descriptive Statistics
-
-The total number of students in the FY2012 repayment cohort is 34.6 million. Of these, 31 million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1289825 with the standard deviation of 0.0748062.
+The total number of students in the FY2012 repayment cohort is 34.8 million. Of these, 31 million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is 0.1289825 with the standard deviation of 0.0748062.
 
 Total count, mean, median and standard deviation of default rates (`CDR3`) by `CONTROL` (institution's ownership type) are as follows:
 
@@ -406,21 +405,6 @@ ggplot(sc1415.net,aes(x=DEBT_MDN,y=CDR3*100)) +
 
 *** 
 
-#### Family Income (Median) vs Default Rate
-
-
-```r
-ggplot(sc1415.net,aes(x=MD_FAMINC,y=CDR3*100)) +
-   geom_point(alpha=.1, col='blue') +
-   geom_smooth(method="lm", col="black") +
-   xlab("Family Income - Median ($)") +
-   ylab("Default Rate (%)")
-```
-
-![](StudentLoanDefaults_files/figure-html/FamIncome-1.png)<!-- -->
-
-*** 
-
 #### Percentage of First Generation Students vs Default Rate by School Ownership Type
 
 
@@ -455,11 +439,11 @@ ggplot(sc1415.net,aes(y=CDR3*100,x=PAR_ED_PCT_1STGEN*100, col=PREDDEG)) +
 
 ![](StudentLoanDefaults_files/figure-html/ParEdbyPREDDEG-1.png)<!-- -->
 
-As expected, Associate's and Certificate institutions report higher proportions of first generation students. Regardless of degree types, the parents education level correlates to default rate.
+As expected, Associate's and Certificate institutions report higher proportions of first generation students. Regardless of degree types, the parents education level positively correlates to default rate.
 
 ***
 
-#### Percentage of Pell Grant Recipients vs Default Rate by Institution Type based on Predominant Degrees
+#### Percentage of Pell Grant vs Default Rate by Institution Type based on Predominant Degrees
 
 
 ```r
@@ -500,7 +484,7 @@ There is a negative correlation between instructional spending and default rate 
 
 ***
 
-## Categorical Variable Conversion to Dummy Variables
+#### Categorical Variable Conversion to Dummy Variables
 
 Before building models, categorical variables (`CONTROL`, `PREDDEG`, and `REGION`) need to be converted to dummy variables. `DISTANCEONLY` has been dropped as its values are highly skewed -- only 0.6% is classified as Online-Education Only.
 
@@ -526,7 +510,7 @@ sc1415.final$DISTANCEONLY <- NULL
 
 ***
 
-## Predictive Model Building
+# Predictive Model Building
 
 Now, the `sc1415.final` data frame is all set for building models.  It consists of 5209 observations and 27 independent variables.  The `CDR3` is the outcome variable.  The goal is to predict student loan default rates.
 
@@ -542,7 +526,7 @@ Test <- sc1415.final[!(split_vec),]
 ```
 
 
-### Model 1 - Linear Regression
+#### Model 1 - Linear Regression
 
 
 Using 10-fold cross-validation, we select the smallest set of variables that minimizes the Root Mean Square Error (RMSE) in stepwise backward variable selection.
@@ -742,7 +726,7 @@ sqrt(sum(residualTest^2)/nrow(Test))
 The RMSE at 0.05 is a bit lower than that of the training set (0.0555341).
 
 
-### Model 2 - Classification and Regression Tree (CART)
+#### Model 2 - Classification and Regression Tree (CART)
 
 In this modeling, we will create a decision tree whose end nodes of branches show average default rates. Let's build a model using all predictors, plot the resulting tree and compute the RMSE.
 
@@ -784,7 +768,7 @@ Interestingly, the tree references only 4 variables -- `DEP_INC_AVG`, `IND_INC_A
 The RMSE is 0.0514 which is higher than the linear regression model's (0.05).
 
 
-### Model 3 - Random Forest (RF)
+#### Model 3 - Random Forest (RF)
 
 Moving on to the 3rd model, Random Forest lacks interpretability, but results in a better accuracy.  
 
@@ -866,3 +850,6 @@ https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf
 http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/  
 
 http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html  
+
+https://www.ed.gov/news/press-releases/us-department-education-releases-national-student-loan-fy-2014-cohort-default-rate  
+
