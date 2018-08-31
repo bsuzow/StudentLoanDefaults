@@ -68,24 +68,78 @@ Linear Regression
 
 - Backward feature selection using a 10-fold cross validation reduces the number of variables to 19. 
 
+```{r echo=FALSE, include=FALSE}
+sc1415.final <- read.csv("sc1415final.csv")
+
+library(caTools)
+set.seed(100)
+split_vec <- sample.split(sc1415.final$CDR3,SplitRatio=.75)
+Train <- sc1415.final[split_vec,]
+Test <- sc1415.final[!(split_vec),]
 
 
-- The RMSE of this model is 0.05.
+lm1 <- lm(CDR3 ~ UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
+          DEP_INC_AVG+IND_INC_AVG+
+          DEBT_MDN+GRAD_DEBT_MDN+WDRAW_DEBT_MDN+
+          CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
+          PREDDEG.Associate.s+PREDDEG.Bachelor.s+
+          REGION.Mid.East+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn+REGION.Outlying.Areas,
+
+          data=Train)
+
+lm1.pred <- predict(lm1, newdata=Test)
+residualTest <- (lm1.pred - Test$CDR3)
+# RMSE
+sqrt(sum(residualTest^2)/nrow(Test))
+
+```
+
+- The RMSE of this model is `r round(sqrt(sum(residualTest^2)/nrow(Test)),3)`.
 
 CART - Decision Tree
 ========================================================
 
-![plot of chunk unnamed-chunk-2](StudentLoanDefaults-figure/unnamed-chunk-2-1.png)
+```{r echo=FALSE}
+library(rpart)
+library(rpart.plot)
+defaultsTree = rpart(CDR3 ~ .,
+                     data=Train)
+
+prp(defaultsTree)  # plotting the tree
+
+predictCART = predict(defaultsTree,newdata=Test)    
+
+residualTestCART <- (predictCART- Test$CDR3)
+
+```
 - The regression tree reports only 4 variables (`DEP_INC_AVG`, `IND_INC_AVG`, `TUITFTE`, and `GRAD_DEB`) for splitting rules.
-- The RMSE of this model is 0.051 which is a little higher than the linear regression model.
+- The RMSE of this model is `r round(sqrt(sum(residualTestCART^2)/nrow(Test)),3)` which is a little higher than the linear regression model.
 
 Random Forest
 ========================================================
 
-![plot of chunk unnamed-chunk-3](StudentLoanDefaults-figure/unnamed-chunk-3-1.png)
+```{r echo=FALSE}
+library("randomForest")
+
+defaultsForest = randomForest(CDR3 ~
+          UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
+          DEP_INC_AVG+IND_INC_AVG+
+          DEBT_MDN+GRAD_DEBT_MDN+WDRAW_DEBT_MDN+
+          CONTROL.Private.nonprofit+CONTROL.Private.for.profit+
+          PREDDEG.Associate.s+PREDDEG.Bachelor.s+
+          REGION.Mid.East+REGION.Plains+REGION.Southeast+REGION.Southwest+REGION.Rocky.Mtn+REGION.Outlying.Areas,
+
+          data=Train,
+          nodesize=25,
+          ntree=200)
+predictForest = predict(defaultsForest,newdata=Test) 
+residualTestForest <- (predictForest- Test$CDR3)
+
+varImpPlot(defaultsForest)
+```
 
 - This model reports the variables in the order of importance.
-- The RMSE of this model is 0.045 which is the lowest of the three models.
+- The RMSE of this model is `r round(sqrt(sum(residualTestForest^2)/nrow(Test)),3)` which is the lowest of the three models.
 
 Further Possible Studies and Analyses
 ========================================================

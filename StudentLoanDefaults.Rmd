@@ -123,7 +123,13 @@ sc1415 <- sc1415[,selectedCols]
 
 sc1415.net <- sc1415[complete.cases(sc1415),]  # remove rows with missing values in selected columns.
 
-names(sc1415)[colSums(is.na(sc1415.net))>0]
+names(sc1415.net)[colSums(is.na(sc1415.net))>0]
+```
+
+The final set of the variables are:
+
+```{r}
+names(sc1415.net)
 ```
 
 The total number of rows has reduced from `r nrow(sc1415)` to `r nrow(sc1415.net)` and the number of columns is down to `r ncol(sc1415.net)`.  
@@ -146,13 +152,11 @@ control_list <- c(1:3)
 control_descs <- c("Public",
                   "Private nonprofit",
                   "Private for-profit")
-
 sc1415.net <- sc1415.net %>% mutate(CONTROL = factor(CONTROL,levels=control_list,
                                              labels=control_descs))
 # 1	Public
 # 2	Private nonprofit
 # 3	Private for-profit
-
 
 preddeg_list <- c(1:3)
 preddeg_descs <- c(
@@ -160,27 +164,22 @@ preddeg_descs <- c(
                   "Associate's",
                   "Bachelor's"
                   )
-
 sc1415.net <- sc1415.net %>% mutate(PREDDEG = factor(PREDDEG,levels=preddeg_list,
                                              labels=preddeg_descs))
-
 # 0	Not classified	IPEDS  -- not included in the analysis
 # 1	Predominantly certificate-degree granting	
 # 2	Predominantly associate's-degree granting	
 # 3	Predominantly bachelor's-degree granting	
 # 4	Entirely graduate-degree granting -- not included in the analysis	
 
-
 distanceonly_list = c(0:1)
 distanceonly_descs = c("Not Online-Ed Only",
-                  "Online-Ed Only")
-
+                       "Online-Ed Only")
 sc1415.net <- sc1415.net %>% mutate(DISTANCEONLY = factor(DISTANCEONLY,levels=distanceonly_list,
                                              labels=distanceonly_descs))
 
 #0	Not distance-education only
 #1	Distance-education only
-
 
 region_list <- c(1:9)
 region_descs <- c(
@@ -193,10 +192,8 @@ region_descs <- c(
                  "Rocky Mtn",
                  "Far West",
                  "Outlying Areas")
-
 sc1415.net <- sc1415.net %>% mutate(REGION = factor(REGION,levels=region_list,
                                              labels=region_descs))
-
 # 0	U.S. Service Schools	 --- Not observed in the data frame.
 # 1	New England (CT, ME, MA, NH, RI, VT)		
 # 2	Mid East (DE, DC, MD, NJ, NY, PA)		
@@ -209,13 +206,22 @@ sc1415.net <- sc1415.net %>% mutate(REGION = factor(REGION,levels=region_list,
 # 9	Outlying Areas (AS, FM, GU, MH, MP, PR, PW, VI)		
 ```
 
+#### Binning Default Rates
+Let's group the default rates `CDR3` to quartiles. The grouping may be useful for data visualization.
+
+```{r}
+cdr3q <- quantile(sc1415.net$CDR3)
+CDR3bin <-cut(sc1415.net$CDR3,breaks=cdr3q,labels=c("1Q","2Q","3Q","4Q"),include.lowest = TRUE)
+```
+
+
 ***
 
 # Exploratory Data Analysis
 
 #### Quick Descriptive Statistics
 
-The total number of students in the FY2012 repayment cohort is `r round(sum(sc1415.CDR3$CDR3_DENOM)/1000000,1)` million. Of these, `r round(sum(sc1415.net$CDR3_DENOM)/1000000,1)` million are the students from certificate, associate's or bachelor's degree programs.  Their average default rate is `r mean(sc1415.net$CDR3)` with the standard deviation of `r sd(sc1415.net$CDR3)`.
+The total number of students in the FY2012 repayment cohort is `r round(sum(sc1415.all$CDR3_DENOM,na.rm=TRUE)/1000000,1)` million. Of these, `r round(sum(sc1415.net$CDR3_DENOM)/1000000,1)` million who had attended `r nrow(sc1415.net)` schools are included in this study.  Their average default rate is `r mean(sc1415.net$CDR3)` with the standard deviation of `r sd(sc1415.net$CDR3)`.
 
 Total count, mean, median and standard deviation of default rates (`CDR3`) by `CONTROL` (institution's ownership type) are as follows:
 
@@ -397,6 +403,10 @@ sc1415.final$CONTROL <- NULL
 sc1415.final$REGION  <- NULL
 sc1415.final$PREDDEG <- NULL
 sc1415.final$DISTANCEONLY <- NULL
+
+# save the data frames
+write.csv(sc1415.net,"sc1415net.csv")
+write.csv(sc1415.final,"sc1415final.csv")
 
 ```
 
