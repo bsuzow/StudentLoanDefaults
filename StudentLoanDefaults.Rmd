@@ -449,7 +449,7 @@ nvmaxCV <- train(CDR3 ~., data = Train,
 nvmaxCV$results
 ```
 
-While the # of predictors recommended is `r nvmaxCV$bestTune`, a dip is observed at 19. The RMSE delta between 19 and `r nvmaxCV$bestTune` nvmax levels is negligible. In the spirit of keeping the model as simply as possible, we will use 19 variables. 
+While the # of predictors recommended is `r nvmaxCV$bestTune`, a dip is observed at 19. The RMSE delta between 19 and `r nvmaxCV$bestTune` nvmax levels is negligible. In the spirit of keeping the model as simple as possible, we will use 19 variables. 
 
 The top 19 predictors are as follows:
 
@@ -460,7 +460,7 @@ names(coef(nvmaxCV$finalModel,19))
 
 Let's build a linear regression model with these variables.
 
-```{r}
+```{r lm1}
 lm1 <- lm(CDR3 ~ UGDS+INEXPFTE+PCTPELL+PAR_ED_PCT_1STGEN+
           DEP_INC_AVG+IND_INC_AVG+
           DEBT_MDN+GRAD_DEBT_MDN+WDRAW_DEBT_MDN+
@@ -485,6 +485,7 @@ The following plot shows that the residuals bounce around the y=0 horizontal lin
 
 ```{r residualPlot}
 ggplot(data=Train,aes(x=as.numeric(row.names(Train)),y=lm1$residuals)) + geom_point(alpha=.2) +
+   geom_smooth(method="lm") +
    xlab("Training Set Row Index") +
    ylab("Residual")
 ```
@@ -593,14 +594,25 @@ Its RMSE is indeed the lowest of the 3 models at `r round(sqrt(sum(residualTestF
 * Relative to the New England region, the Plains, Southeast, Southwest and Rocky Mountain regions are associated with an increase in default rate whereas the Mid East and Outlying Areas regions with a decrease.   
 * The CART model tree illustrates 12% or higher average default rate for the institutions whose the family income level for independent students is below $22,000 and for dependent students below $57,000. [The annual median income for high school diploma holders is about $25,000](http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html). This group of institutions accounts for almost 60% of the sample -- `r nrow(sc1415.final[sc1415.final$IND_INC_AVG<22000 & sc1415.final$DEP_INC_AVG<57000,])` out of `r nrow(sc1415.final)`.   
 
+***
+
+# Further Possible Studies and Analyses
+
+- Multi-year analysis with the most recent 3 or 4-year cohorts.  
+    + Whether the same or similar set of predictors emerges, or time-series based trends would be of research interests.  
+- Analysis on repayment rates.
+    + The college scorecard data set provides repayment rates in `RPY_*YR_RT` columns.  What are the predictors for repayment trends?  Any correlation between repayment and default rates?
+- Study on defaults after tracking period.
+    + [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period, and states that the picture looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
 
 ***
+
 
 # References
 
 https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html  
 
-https://college-education.procon.org/  
+https://college-education.procon.org/ 
 
 https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/  
 

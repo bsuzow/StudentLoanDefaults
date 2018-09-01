@@ -1,8 +1,10 @@
-Student Loan Defaults
+Student Loan Defaults Data Analysis Summary
 ========================================================
 author: Bo Suzow
 date: August 30, 2018
 autosize: true
+
+Full Report is available [here](http://www.rpubs.com/adsgs/StuLoanDefaults)
 
 Introduction
 ========================================================
@@ -25,7 +27,6 @@ Data Source and Wrangling
 
 Independent Variables 
 ========================================================
-
 - OPEID6 : 6-digit ID for institution
 - INSTNM : Institution name
 - NUMBRANCH : Number of branch campuses
@@ -37,10 +38,8 @@ Independent Variables
 - TUITFTE : Net tuition per full-time equivalent student (FTE)
 - INEXPFTE : Instructional expenditures per FTE
 - PCTPELL : Percentage of students who receive a Pell Grant
-
 Independent Variables (continued)
 ========================================================
-
 - PCTFLOAN : Percentage of students receiving a federal student loan
 - PAR_ED_PCT_1STGEN : Percentage of first-generation students
 - DEP_INC_AVG : Average family income of dependent students
@@ -50,8 +49,6 @@ Independent Variables (continued)
 - WDRAW_DEBT_MDN : Median debt for students who have not completed
 - MD_FAMINC : Median family income
 - CDR3_DENOM : Number of students in the tracking cohort
-
-
 Predictive Models
 ========================================================
 
@@ -90,7 +87,7 @@ sqrt(sum(residualTest^2)/nrow(Test))
 
 ```
 
-- The RMSE of this model is `r round(sqrt(sum(residualTest^2)/nrow(Test)),3)`.
+- The Root Mean Square Error (RMSE) of this model is `r round(sqrt(sum(residualTest^2)/nrow(Test)),3)`.
 
 CART - Decision Tree
 ========================================================
@@ -140,15 +137,21 @@ varImpPlot(defaultsForest)
 Further Possible Studies and Analyses
 ========================================================
 
-- The college scorecard data set features repayment rates in `RPY_*YR_RT`  columns. These might be the variables worth future analysis efforts.
-- [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period and states that the picture looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
+- Multi-year analysis with the most recent 3 or 4-year cohorts.  
+    + Whether the same or similar set of predictors emerges, or time-series based trends would be of research interests.  
+- Analysis on repayment rates.
+    + The college scorecard data set provides repayment rates in `RPY_*YR_RT` columns.  What are the predictors for repayment trends?  Any correlation between repayment and default rates?
+- Study on defaults after tracking period.
+    + [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period, and states that the picture looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
+
+
 
 What does the data tell us?
 ========================================================
 
-- Bachelor's degree institution is associated with a decrease in default rate in comparison with Associate's and Certificate institutions. [Bachelor's degree holders tend to achieve higher earning] (https://college-education.procon.org/), improving family income which is negatively correlated to default rate.  
-- Parent's education level is an important predictor. The average default rate of the institutions in the 4th quartile of `PAR_ED_PCT_1STGEN` is 33% higher than the overall average (16% vs 12%).   
-- Institution's spending on instructional resources is negatively correlated to default rate. The average default rate of the instituions in the 4th quartile of `INEXPFTE` is 33% lower than the overall average (8% vs 12%). These institutions report $7,800 or more per student (FTE) for instructional expenditures. 
+- Bachelor's degree institution is associated with a decrease in default rate in comparison with Associate's and Certificate institutions. [Bachelor's degree holders tend to achieve higher earnings] (https://college-education.procon.org/), improving family income which is negatively correlated to default rate.  
+- Parent's education level is an important predictor. The average default rate of the institutions in the 4th quartile of `PAR_ED_PCT_1STGEN` is 25% higher than the overall average (16% vs 13%).   
+- Institution's spending on instructional resources is negatively correlated to default rate. The average default rate of the instituions in the 4th quartile of `INEXPFTE` is 38% lower than the overall average (8% vs 13%). These institutions report $7,800 or more per student (FTE) for instructional expenditures. 
 - 60% of the 4th quartitle default rate institutions are private-for-profit. 
 
 
