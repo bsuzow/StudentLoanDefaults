@@ -1,7 +1,7 @@
 ---
 title: "Student Loan Defaults"
 author: "Bo Suzow"
-date: "August 28, 2018"
+date: "September 1, 2018"
 output: 
   html_document:
     keep_md: TRUE
@@ -859,32 +859,39 @@ Its RMSE is indeed the lowest of the 3 models at 0.045.  The model identified th
 # Further Possible Studies and Analyses
 
 - Multi-year analysis with the most recent 3 or 4-year cohorts.  
-    + Whether the same or similar set of predictors emerges, or time-series based trends would be of research interests.  
+    + Whether the similar set of predictors emerges or time-series based trends would be of research interests.  
 - Analysis on repayment rates.
     + The college scorecard data set provides repayment rates in `RPY_*YR_RT` columns.  What are the predictors for repayment trends?  Any correlation between repayment and default rates?
 - Study on defaults after tracking period.
-    + [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period, and states that the picture looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
+    + [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period. The picture the article paints looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
 
 ***
 
+# Recommendations
+
+- Rule change in federal loan eligibility.
+    + The 'high' default rate is currently defined as 30% or above. That is 1.5% of the institutitions analyzed in this study. The default rate for the 90th percentile is  22.4%.  With all due respect, I recommend that the current federal loan  eligibility rules be changed:
+        - from: losing the eligibility if the default rate reaches 30% or above for 3 years in a row or 40%+ on a single year  
+        - to: losing the eligibility if the default rate falls on the 90th percentile for 3 years in a row or the 95th percentfile on a single year.
+    + This change would increase the pool of 'at risk' institutions and encourage all institutions to address the default issue strategically and proactively. 
+    + At-risk institutions under the new rules would be allowed to submit justifications to the Department of Ed. (DoE) for explanation for extenuating circumstances. A waiver could be granted after a thorough review by the DoE. 
+       
+- Empower first generation students with information regarding dire consequencies of student loan defaults and tools with which students control loans within a manageable amount.  This effort should be made at the institution and federal levels. 
+
+- Incentivize [employers that offer repayment assistant programs](http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html) as benefits to encourage comparable program implementation that would attract talent, relieve our future generations from heavy financial burden, and pave a way for soft landing of possible student loan crashes. 
+    
+***
 
 # References
-
-https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html  
-
-https://college-education.procon.org/ 
-
-https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/  
-
-https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx  
-
-http://www.ncsl.org/research/labor-and-employment/state-minimum-wage-chart.aspx   
-
-https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf  
-
-http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/  
-
-http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html  
-
-https://www.ed.gov/news/press-releases/us-department-education-releases-national-student-loan-fy-2014-cohort-default-rate  
+- https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html  
+- https://college-education.procon.org/ 
+- https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/  
+- https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx  
+- http://www.ncsl.org/research/labor-and-employment/state-minimum-wage-chart.aspx   
+- https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf  
+- http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/  
+- http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html  
+- https://www.ed.gov/news/press-releases/us-department-education-releases-national-student-loan-fy-2014-cohort-default-rate  
+- https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html  
+- http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html
 

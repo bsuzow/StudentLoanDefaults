@@ -1,7 +1,7 @@
 Student Loan Defaults Data Analysis Summary
 ========================================================
 author: Bo Suzow
-date: August 30, 2018
+date: September 1, 2018
 autosize: true
 
 Full Report is available [here](http://www.rpubs.com/adsgs/StuLoanDefaults)
@@ -144,15 +144,33 @@ Further Possible Studies and Analyses
 - Study on defaults after tracking period.
     + [A recent New York Times article](https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html) discusses student loan default statistics after the end of a given tracking period, and states that the picture looks gloomier.  An analysis on the after-tracking-period data would provide a fuller picture. 
 
-
-
 What does the data tell us?
 ========================================================
-
 - Bachelor's degree institution is associated with a decrease in default rate in comparison with Associate's and Certificate institutions. [Bachelor's degree holders tend to achieve higher earnings] (https://college-education.procon.org/), improving family income which is negatively correlated to default rate.  
 - Parent's education level is an important predictor. The average default rate of the institutions in the 4th quartile of `PAR_ED_PCT_1STGEN` is 25% higher than the overall average (16% vs 13%).   
 - Institution's spending on instructional resources is negatively correlated to default rate. The average default rate of the instituions in the 4th quartile of `INEXPFTE` is 38% lower than the overall average (8% vs 13%). These institutions report $7,800 or more per student (FTE) for instructional expenditures. 
 - 60% of the 4th quartitle default rate institutions are private-for-profit. 
 
+Recommendations
+========================================================
+- Rule change in federal loan eligibility.
+    + The 'high' default rate is currently defined as 30% or above. That is `r round(sum(sc1415.final$CDR3>=.3)/nrow(sc1415.final)*100,1)`% of the institutitions analyzed in this study. The default rate for the 90th percentile is  `r round(quantile(sc1415.final$CDR3,prob=seq(0,1,.1))[10]*100,1)`%.  
+        - from: losing the eligibility if the default rate reaches 30% or above for 3 years in a row or 40%+ on a single year  
+        - to: losing the eligibility if the default rate falls on the 90th percentile for 3 years in a row or the 95th percentfile on a single year.
+- Empower first generation students with information regarding dire consequencies of student loan defaults and tools with which students control loans within a manageable amount.  This effort should be made at the institution and federal levels. 
+- Incentivize [employers that offer repayment assistant programs](http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html) as benefits to encourage comparable program implementation that would attract talent, relieve our future generations from heavy financial burden, and pave a way for soft landing of possible student loan crashes.
 
+References
+========================================================
 
+- https://www.yahoo.com/amphtml/finance/news/millennial-marriages-crumbling-student-loan-debt-134145853.html  
+- https://college-education.procon.org/ 
+- https://www.politifact.com/truth-o-meter/statements/2015/aug/14/jeb-bush/jeb-bush-student-loan-debt-has-doubled-under-obama/  
+- https://collegescorecard.ed.gov/assets/CollegeScorecardDataDictionary.xlsx  
+- http://www.ncsl.org/research/labor-and-employment/state-minimum-wage-chart.aspx   
+- https://collegescorecard.ed.gov/assets/FullDataDocumentation.pdf  
+- http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/  
+- http://www.aplu.org/projects-and-initiatives/college-costs-tuition-and-financial-aid/publicuvalues/student-debt.html  
+- https://www.ed.gov/news/press-releases/us-department-education-releases-national-student-loan-fy-2014-cohort-default-rate  
+- https://www.nytimes.com/interactive/2018/08/25/opinion/sunday/student-debt-loan-default-college.html  
+- http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html
