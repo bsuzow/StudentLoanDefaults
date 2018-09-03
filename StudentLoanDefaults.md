@@ -288,7 +288,7 @@ CDR3bin <-cut(sc1415.net$CDR3,breaks=cdr3q,labels=c("1Q","2Q","3Q","4Q"),include
 
 #### Quick Descriptive Statistics
 
-The total number of students in the FY2012 repayment cohort is 34.8 million. Of these, 31 million who had attended 5209 schools are included in this study.  Their average default rate is 0.1289825 with the standard deviation of 0.0748062.
+The total number of students in the FY2012 repayment cohort is 34.8 million. Of these, 31 million who had attended 5209 schools are included in this study.  Their average default rate is 0.129 with the standard deviation of 0.07.
 
 Total count, mean, median and standard deviation of default rates (`CDR3`) by `CONTROL` (institution's ownership type) are as follows:
 

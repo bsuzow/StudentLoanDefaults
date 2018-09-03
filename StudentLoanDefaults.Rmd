@@ -221,7 +221,7 @@ CDR3bin <-cut(sc1415.net$CDR3,breaks=cdr3q,labels=c("1Q","2Q","3Q","4Q"),include
 
 #### Quick Descriptive Statistics
 
-The total number of students in the FY2012 repayment cohort is `r round(sum(sc1415.all$CDR3_DENOM,na.rm=TRUE)/1000000,1)` million. Of these, `r round(sum(sc1415.net$CDR3_DENOM)/1000000,1)` million who had attended `r nrow(sc1415.net)` schools are included in this study.  Their average default rate is `r mean(sc1415.net$CDR3)` with the standard deviation of `r sd(sc1415.net$CDR3)`.
+The total number of students in the FY2012 repayment cohort is `r round(sum(sc1415.all$CDR3_DENOM,na.rm=TRUE)/1000000,1)` million. Of these, `r round(sum(sc1415.net$CDR3_DENOM)/1000000,1)` million who had attended `r nrow(sc1415.net)` schools are included in this study.  Their average default rate is `r round(mean(sc1415.net$CDR3),3)` with the standard deviation of `r round(sd(sc1415.net$CDR3),2)`.
 
 Total count, mean, median and standard deviation of default rates (`CDR3`) by `CONTROL` (institution's ownership type) are as follows:
 
