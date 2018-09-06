@@ -5,6 +5,8 @@ date: "September 1, 2018"
 output: 
   html_document:
     keep_md: TRUE
+    toc: TRUE
+    toc_float: TRUE
 ---
 
 # Introduction
@@ -51,7 +53,7 @@ Clean up and tidy the data set for exploratory data analysis and modeling.
 - Determin missing value treatment strategy if applicable.
 - Transform data types appropriately.
 
-#### Select Relevant Variables 
+### Select Relevant Variables 
 
 Two issues are noticed immediately. 
 
@@ -88,7 +90,7 @@ As for missing values, it's observed that they are rather concentrated on the sc
 sc1415 <- sc1415.CDR3 %>% filter(PREDDEG!=4)
 ```
 
-#### Missing Values
+### Missing Values
 
 After graduates schools are removed, are there any columns with missing values?  
 
@@ -139,7 +141,7 @@ Let's confirm that all `CDR3` (default rate) and `CDR3_DENOM` (the number of stu
 ## [1] FALSE
 ```
 
-#### Variable Selection
+### Variable Selection
 
 Now select the variables with less than 10% missing value. Further clean up by eliminating the rows with missing values (Caveat: This is a simpliest approach of treating missing values.  This may have to be revisited in pursuit of a more efficient strategy.)
 
@@ -208,7 +210,7 @@ summary(sc1415.net$CDR3)
 
 ***
 
-#### Categorical Variable Conversion to Factor Variables
+### Categorical Variable Conversion to Factor Variables
 
 Convert `CONTROL`, `PREDDEG`, `DISTANCEONLY`, and `REGION` to factor variables with proper labels.
 
@@ -286,7 +288,7 @@ CDR3bin <-cut(sc1415.net$CDR3,breaks=cdr3q,labels=c("1Q","2Q","3Q","4Q"),include
 
 # Exploratory Data Analysis
 
-#### Quick Descriptive Statistics
+### Quick Descriptive Statistics
 
 The total number of students in the FY2012 repayment cohort is 34.8 million. Of these, 31 million who had attended 5209 schools are included in this study.  Their average default rate is 0.129 with the standard deviation of 0.075.
 
@@ -346,7 +348,7 @@ sc1415.net %>% group_by(PREDDEG) %>% summarize(n(),mean(CDR3),median(CDR3),sd(CD
 
 ## Data Visualization
 
-#### Histograms
+### Histograms
 
 
 ```r
@@ -379,7 +381,7 @@ The longer right tails observed in the plots are accounted for by 80 schools whi
 
 ***
 
-#### Average Family Income of Dependent Students vs Default Rate
+### Average Family Income of Dependent Students vs Default Rate
 
 
 ```r
@@ -394,7 +396,7 @@ ggplot(sc1415.net,aes(x=DEP_INC_AVG,y=CDR3*100)) +
 
 ***
 
-#### Average Family Income of Independent Students vs Default Rate
+### Average Family Income of Independent Students vs Default Rate
 
 
 ```r
@@ -409,7 +411,7 @@ ggplot(sc1415.net,aes(x=IND_INC_AVG,y=CDR3*100)) +
 
 ***
 
-#### Loan Amount (Median) vs Default Rate
+### Loan Amount (Median) vs Default Rate
 
 
 ```r
@@ -424,7 +426,7 @@ ggplot(sc1415.net,aes(x=DEBT_MDN,y=CDR3*100)) +
 
 *** 
 
-#### Percentage of First Generation Students vs Default Rate by School Ownership Type
+### Percentage of First Generation Students vs Default Rate by School Ownership Type
 
 
 ```r
@@ -444,7 +446,7 @@ There is a positive correlation between default rate and the proportion of stude
 
 *** 
 
-#### Percentage of First Generation Students vs Default Rate by Predominant Degree Type
+### Percentage of First Generation Students vs Default Rate by Predominant Degree Type
 
 
 ```r
@@ -462,7 +464,7 @@ As expected, Associate's and Certificate institutions report higher proportions 
 
 ***
 
-#### Percentage of Pell Grant vs Default Rate by Institution Type based on Predominant Degrees
+### Percentage of Pell Grant vs Default Rate by Institution Type based on Predominant Degrees
 
 
 ```r
@@ -482,7 +484,7 @@ A positive correlation between Pell Grant recipient percentage and default rate 
 
 ***
 
-#### Instructional Expenditure Per Student vs Default Rate
+### Instructional Expenditure Per Student vs Default Rate
 
 
 ```r
@@ -503,7 +505,7 @@ There is a negative correlation between instructional spending and default rate 
 
 ***
 
-#### Categorical Variable Conversion to Dummy Variables
+### Categorical Variable Conversion to Dummy Variables
 
 Before building models, categorical variables (`CONTROL`, `PREDDEG`, and `REGION`) need to be converted to dummy variables. `DISTANCEONLY` has been dropped as its values are highly skewed -- only 0.6% is classified as Online-Education Only.
 
@@ -549,7 +551,7 @@ Test <- sc1415.final[!(split_vec),]
 ```
 
 
-#### Model 1 - Linear Regression
+### Model 1 - Linear Regression
 
 
 Using 10-fold cross-validation, we select the smallest set of variables that minimizes the Root Mean Square Error (RMSE) in stepwise backward variable selection.
@@ -750,7 +752,7 @@ sqrt(sum(residualTest^2)/nrow(Test))
 The RMSE at 0.05 is a bit lower than that of the training set (0.0555341).
 
 
-#### Model 2 - Classification and Regression Tree (CART)
+### Model 2 - Classification and Regression Tree (CART)
 
 In this modeling, we will create a decision tree whose end nodes of branches show average default rates. Let's build a model using all predictors, plot the resulting tree and compute the RMSE.
 
@@ -792,7 +794,7 @@ Interestingly, the tree references only 4 variables -- `DEP_INC_AVG`, `IND_INC_A
 The RMSE is 0.0514 which is higher than the linear regression model's (0.05).
 
 
-#### Model 3 - Random Forest (RF)
+### Model 3 - Random Forest (RF)
 
 Moving on to the 3rd model, Random Forest lacks interpretability, but results in a better accuracy.  
 
@@ -878,7 +880,7 @@ Its RMSE is indeed the lowest of the 3 models at 0.045.  The model identified th
        
 - Empower first generation students with information regarding dire consequencies of student loan defaults and tools with which students control loans within a manageable amount.  This effort should be made at the institution and federal levels. 
 
-- Incentivize [employers that offer repayment assistant programs](http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html) as benefits to encourage comparable program implementation that would attract talent, relieve our future generations from heavy financial burden, and pave a way for soft landing of possible student loan crashes. 
+- Incentivize [employers that offer repayment assistant programs](http://www.chicagotribune.com/business/ct-biz-irs-student-loan-perk-0902-story,amp.html) as benefits to encourage comparable program implementation that would attract talent, relieve our future generations from heavy financial burden, and pave the way for soft landing of possible student loan crashes. 
     
 ***
 
