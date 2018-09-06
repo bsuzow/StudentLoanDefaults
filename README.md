@@ -4,8 +4,10 @@ Student loan debt (SLD) total in the US reached a staggering number in 1.5 trill
 
 In order for an student to be able to pay off HED loans, the loan total should not exceed his/her annual income from gainful employment the HED would provide.  For unfortunate some, this rule of thumb was violated and loan defaults resulted. 
 
-The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data.  The goals of this report are:
+The US Department of Education publishes the College Scorecard data to help the public to make informed decisions about investments in higher education.  The data features large amount of metrics and is organized by academic year. In this report, we will focus on the 2014-15 scorecard data.  The purposes of this report are:
 
 - Explore the data to ascertain some trends the data is telling us.
 - Find out strong predictors affecting default rates.
 - Build a prediction model for default rates.
+
+[Full Report](http://rpubs.com/adsgs/StuLoanDefaults)
